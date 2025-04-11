@@ -26,9 +26,9 @@ class MarkerService {
   }
 
   // 경로 추가
-  Future<void> addRoute(kakao.LatLng myPosition) async {
-    if (myPosition == null) return;
-    if (poiLat.contains(myPosition)) {
+  Future<void> addRoute(kakao.LatLng recentPostion) async {
+    if (recentPostion == null) return;
+    if (poiLat.contains(recentPostion)) {
       print("이미 추가된 위치입니다");
       return;
     }
@@ -36,14 +36,14 @@ class MarkerService {
     try {
       // POI 생성
       kakao.Poi poi = await mapController!.labelLayer.addPoi(
-        myPosition,
+        recentPostion,
         style: kakao.PoiStyle(
           icon: kakao.KImage.fromAsset('assets/images/marker.png', 70, 70),
         ),
       );
 
       pois.add(poi);
-      poiLat.add(myPosition);
+      poiLat.add(recentPostion);
       drawPolyline();
 
       // POI 클릭 이벤트는 MethodChannel을 통해 처리됨

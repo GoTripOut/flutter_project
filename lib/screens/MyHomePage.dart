@@ -77,6 +77,14 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
       case 2:
         markerService!.resetRoute();
+
+        // 경로를 초기화하였으므로, 최근 위치를 현재 위치로 설정한다.
+        recentPosition = myPosition;
+
+        // 경로를 초기화하였으므로, 다시 현재 위치로 카메라를 돌아오게 한다.
+        mapController!.moveCamera(
+          kakao.CameraUpdate.newCenterPosition(myPosition!),
+        );
         break;
     }
   }
