@@ -147,9 +147,11 @@ class _MyHomePageState extends State<MyHomePage> {
               print("카카오 지도가 정상적으로 불러와졌습니다.");
               _sendPosition();
             },
-
-            // 추가해야하는 onclickpoi
-            onPoiClick: (_, poi) => _handlePoiClick(poi),
+            onPoiClick: (kakao.LabelController controller, kakao.Poi poi){
+              labelController = controller;
+              markerService?.selectedPoiId = poi.id;
+              print("poi clicked");
+            }
           ) : const Center(child: CircularProgressIndicator()),
           // 검색창을 지도 위에 겹침
           Positioned(
