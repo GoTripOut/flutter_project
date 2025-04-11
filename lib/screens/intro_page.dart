@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:sample_flutter_project/screens/favorite_selection_page_1.dart';
-class IntroPage extends StatefulWidget {
+class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
-
   @override
-  State<StatefulWidget> createState() => _IntroPageState();
+  Widget build(BuildContext context) {
+    return _IntroPage();
+  }
 }
 
-class _IntroPageState extends State<IntroPage> {
+class _IntroPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
