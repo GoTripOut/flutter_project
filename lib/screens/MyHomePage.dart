@@ -26,6 +26,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   kakao.LatLng? myPosition;
+  // 최근에 클릭한 위치를 저장하는 변수 recentPostion
+  kakao.LatLng? recentPosition;
   kakao.KakaoMapController? mapController;
   kakao.LabelController? labelController;
   late TextEditingController textController; // 검색어 입력
@@ -56,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (position != null) {
       setState(() {
         myPosition = position;
+        recentPosition = position;
       });
     }
   }
@@ -67,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     switch (index) {
       case 0:
-        markerService!.addRoute(myPosition!);
+        markerService!.addRoute(recentPosition!);
         break;
       case 1:
         markerService!.deleteRoute();
@@ -90,10 +93,10 @@ class _MyHomePageState extends State<MyHomePage> {
     kakao.LatLng? result = await RestApiService().getCoordinates(query);
     if (result != null) {
       setState(() {
-        myPosition = result;
+        recentPosition = result;
       });
       mapController!.moveCamera(
-        kakao.CameraUpdate.newCenterPosition(myPosition!),
+        kakao.CameraUpdate.newCenterPosition(recentPosition!),
       );
     }
     setState(() {
@@ -120,6 +123,11 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  // 커스텀 함수
+  void _handlePoiClick(kakao.Poi poi) {
+    print('POI ID: ${poi.id}');
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -139,6 +147,9 @@ class _MyHomePageState extends State<MyHomePage> {
               print("카카오 지도가 정상적으로 불러와졌습니다.");
               _sendPosition();
             },
+
+            // 추가해야하는 onclickpoi
+            onPoiClick: (_, poi) => _handlePoiClick(poi),
           ) : const Center(child: CircularProgressIndicator()),
           // 검색창을 지도 위에 겹침
           Positioned(

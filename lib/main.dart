@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
 import '';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: 'assets/config/.env');
@@ -19,6 +20,7 @@ void main() async {
   }
 
   await kakao.KakaoMapSdk.instance.initialize(kakaoNativeAppKey);
+
   runApp(const MyApp());
 }
 

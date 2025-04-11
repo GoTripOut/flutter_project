@@ -32,16 +32,26 @@ class MarkerService {
       print("이미 추가된 위치입니다");
       return;
     }
-    kakao.Poi poi = await mapController!.labelLayer.addPoi(
+
+    try {
+      // POI 생성
+      kakao.Poi poi = await mapController!.labelLayer.addPoi(
         myPosition,
         style: kakao.PoiStyle(
-          icon: kakao.KImage.fromAsset('assets/images/marker.png', 70, 70),)
-    );
+          icon: kakao.KImage.fromAsset('assets/images/marker.png', 70, 70),
+        ),
+      );
 
-    pois.add(poi);
-    poiLat.add(myPosition);
-    drawPolyline();
+      pois.add(poi);
+      poiLat.add(myPosition);
+      drawPolyline();
+
+      // POI 클릭 이벤트는 MethodChannel을 통해 처리됨
+    } catch (e) {
+      print("마커 추가 실패: $e");
+    }
   }
+
 
   // 경로 삭제
   Future<void> deleteRoute() async {
