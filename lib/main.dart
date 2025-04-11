@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: 'assets/config/.env');
@@ -13,6 +14,7 @@ void main() async {
   }
 
   await kakao.KakaoMapSdk.instance.initialize(kakaoNativeAppKey);
+
   runApp(const MyApp());
 }
 
