@@ -1,13 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
-import 'package:sample_flutter_project/marker_service.dart';
-import 'package:sample_flutter_project/position_service.dart';
-import 'package:sample_flutter_project/coordinate_service.dart';
-import 'package:http/http.dart' as http;
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
-import '';
 
 
 void main() async {
