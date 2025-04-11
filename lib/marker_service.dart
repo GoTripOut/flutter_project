@@ -40,7 +40,7 @@ class MarkerService {
       kakao.Poi poi = await mapController!.labelLayer.addPoi(
         recentPostion,
         style: kakao.PoiStyle(
-          icon: kakao.KImage.fromAsset('assets/images/marker.png', 70, 70),
+          icon: kakao.KImage.fromAsset('assets/images/marker.png', 25, 25),
         ),
       );
 
