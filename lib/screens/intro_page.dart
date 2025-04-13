@@ -75,56 +75,12 @@ class _IntroPage extends StatelessWidget {
                 ),
               ),
             ),
-            InkWell(
-              onTap: (){
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const FavoriteSelectionPage1())
-                );
-              },
-              child: Container(
+            Container(
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 11),
-                decoration: ShapeDecoration(
-                  color: const Color(0xFF0000FF),
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                      width: 1,
-                      color: const Color(0xFF0000FF),
-                    ),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                  child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  spacing: 8,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 18,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
-                        ),
-                        Text(
-                          '다음',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w600,
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
               ),
             )
           ],
