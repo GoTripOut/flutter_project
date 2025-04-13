@@ -68,7 +68,7 @@ class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
                 ],
               ),
             ),
-            Container(
+            Container(      //토글 버튼 컨테이너
               width: double.infinity,
               child: Wrap(
                 alignment: WrapAlignment.spaceBetween,
@@ -82,7 +82,7 @@ class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
                 ],
               ),
             ),
-            Container(
+            Container(      //하단 띄우기용 컨테이너
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 11),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

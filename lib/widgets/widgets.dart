@@ -13,13 +13,13 @@ class ToggleButton extends StatefulWidget {
   createState() => _ToggleButtonState();
 }
 class _ToggleButtonState extends State<ToggleButton>{
-  int button_color = 0xFF808080;
-  bool _isSelected = false;
+  int button_color = 0xFF808080;    //기본 버튼 컬러
+  bool _isSelected = false;         //토글 버튼 선택 상태
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        setState((){
+        setState((){    //상태 변경 및 레이아웃 업데이트
           _isSelected = !_isSelected;
           if(_isSelected) {
             button_color = 0xFF0000FF;
@@ -28,7 +28,7 @@ class _ToggleButtonState extends State<ToggleButton>{
           }
         });
       },
-        child: Container(
+        child: Container(   //토글 버튼
           width: 170,
           height: 82,
           decoration: ShapeDecoration(

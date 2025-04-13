@@ -12,9 +12,10 @@ class IntroPageView extends StatefulWidget{
 
 class _IntroPageViewState extends State<IntroPageView>{
   final _pageController = PageController();
-  int pageIndex = 0;
+  int pageIndex = 0;    //현재 페이지 인덱스
+  //페이지들을 관리할 리스트
   List<Widget> pages = [IntroPage(), FavoriteSelectionPage1(), MyHomePage(title: 'flutterdemo')];
-  Widget prevButton(){
+  Widget prevButton(){    //이전 버튼 생성
     return  Positioned(
       bottom: 10, // 버튼 위치 조정
       left: 15,
@@ -23,7 +24,7 @@ class _IntroPageViewState extends State<IntroPageView>{
         children: [
           TextButton(
             onPressed: () {
-              setState((){
+              setState((){    //레이아웃 업데이트
                 if (pageIndex > 0)
                   pageIndex--;
                 print(pageIndex);
@@ -53,7 +54,7 @@ class _IntroPageViewState extends State<IntroPageView>{
       ),
     );
   }
-  Widget nextButton(){
+  Widget nextButton(){    //이전 버튼과 동일
     return  Positioned(
       bottom: 10, // 버튼 위치 조정
       right: 15,
@@ -97,15 +98,18 @@ class _IntroPageViewState extends State<IntroPageView>{
     );
   }
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {    //페이지뷰 빌드
     return Scaffold(
       body: Stack(
         children:[
           PageView(
-            physics: const NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),    //터치로 스크롤 방지
             controller: _pageController,
             children: pages,
             ),
+          //처음 페이지:nextButton만
+          //마지막 페이지:버튼 없음. 이전 페이지들 리스트에서 삭제
+          //이외:이전, 다음 버튼
           if(pageIndex == 0) nextButton()
           else if(pageIndex != 2) ...[prevButton(), nextButton()]
           else Container()
