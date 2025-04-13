@@ -64,19 +64,21 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // 아래 하단 버튼 눌렀을 때의 동작
-  void _itemTapped(int index) {
+  void _itemTapped(int index) async {
     setState(() {
       selectedIndex = index;
     });
     switch (index) {
       case 0:
-        markerService!.addRoute(recentPosition!);
+          await markerService!.addRoute(recentPosition!);
+          setState(() {}); // UI 갱신
         break;
       case 1:
-        markerService!.deleteRoute();
+          await markerService!.deleteRoute();
+          setState(() {}); // UI 갱신
         break;
       case 2:
-        markerService!.resetRoute();
+        await markerService!.resetRoute();
 
         // 경로를 초기화하였으므로, 최근 위치를 현재 위치로 설정한다.
         recentPosition = myPosition;
@@ -85,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
         mapController!.moveCamera(
           kakao.CameraUpdate.newCenterPosition(myPosition!),
         );
+        setState(() {}); // UI 갱신
         break;
     }
   }
@@ -187,10 +190,39 @@ class _MyHomePageState extends State<MyHomePage> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
-                      ): Icon(Icons.search))
+                      ): Icon(Icons.search)
+                  ),
                 ],
               ),
             ),
+          ),
+          DraggableScrollableSheet( // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
+              initialChildSize: 0.1,
+              minChildSize: 0.1,
+              maxChildSize: 0.7,
+              builder: (BuildContext context, ScrollController scrollController) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: (markerService != null && markerService!.pois.isNotEmpty)? ListView.builder(
+                      controller: scrollController,
+                      itemCount: markerService!.pois.length,
+                      itemBuilder: (context, index) {
+                        final poi = markerService!.pois[index];
+                        return ListTile(
+                          title: Text(poi.id),
+                        );
+                      },
+                  ) : Center(
+                    child : Text("경로 리스트가 비어있습니다"),
+                  ),
+                );
+              },
           ),
         ],
       ),
