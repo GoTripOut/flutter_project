@@ -32,14 +32,14 @@ class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
           crossAxisAlignment: CrossAxisAlignment.end,
           spacing: 140,
           children: [
-            Container(
+            Container(  //Title
               width: double.infinity,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
+                  SizedBox(   //main title
                     width: screenWidth * 0.9, // 화면 너비의 비율로 설정
                     child: Text(
                       '풍경',
@@ -52,7 +52,7 @@ class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
                       ),
                     ),
                   ),
-                  SizedBox(
+                  SizedBox(   //sub title
                     width: screenWidth * 0.9, // 화면 너비의 비율로 설정
                     child: Text(
                       '선호하는 항목을 선택해주세요.',
@@ -68,157 +68,26 @@ class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
                 ],
               ),
             ),
-            Container(
+            Container(      //토글 버튼 컨테이너
               width: double.infinity,
               child: Wrap(
                 alignment: WrapAlignment.spaceBetween,
                 runAlignment: WrapAlignment.start,
                 runSpacing: 30,
                 children: [
-                  InkWell(
-                    onTap: (){
-
-                  },
-                  child: ToggleButton(color:color)
-                  ),
-                  Container(
-                    width: 170,
-                    height: 82,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          width: 3,
-                          color: const Color(0xFF808080),
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '바다',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: const Color(0xFF808080),
-                            fontSize: 24,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 170,
-                    height: 82,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          width: 3,
-                          color: const Color(0xFF808080),
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '평야',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: const Color(0xFF808080),
-                            fontSize: 24,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 170,
-                    height: 82,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          width: 3,
-                          color: const Color(0xFF808080),
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          '도심',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: const Color(0xFF808080),
-                            fontSize: 24,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w400,
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ToggleButton(text: "산"),
+                  ToggleButton(text: "바다"),
+                  ToggleButton(text: "평야"),
+                  ToggleButton(text: "도심"),
                 ],
               ),
             ),
-            Container(
+            Container(      //하단 띄우기용 컨테이너
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 11),
-              decoration: ShapeDecoration(
-                color: const Color(0xFF0000FF),
-                shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                    width: 1,
-                    color: const Color(0xFF0000FF),
-                  ),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
-                spacing: 8,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        height: 18,
-                        clipBehavior: Clip.antiAlias,
-                        decoration: BoxDecoration(),
-                      ),
-                      Text(
-                        '다음',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w600,
-                          height: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
+import 'package:sample_flutter_project/screens/intro_page_view.dart';
 
 
 void main() async {
@@ -44,7 +45,9 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: SafeArea(
+        child: IntroPageView(),
+      ),
     );
   }
 }

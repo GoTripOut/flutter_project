@@ -155,9 +155,9 @@ class _MyHomePageState extends State<MyHomePage> {
               print("카카오 지도가 정상적으로 불러와졌습니다.");
               _sendPosition();
             },
-            onPoiClick: (kakao.LabelController controller, kakao.Poi poi){
+            onPoiClick: (kakao.LabelController controller, kakao.Poi poi){    //poi click 시 실행되는 코드
               labelController = controller;
-              markerService?.selectedPoiId = poi.id;
+              markerService?.selectedPoiId = poi.id;                          //선택된 poi의 id를 markerService로 전송
               print("poi clicked");
             }
           ) : const Center(child: CircularProgressIndicator()),
