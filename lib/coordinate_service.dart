@@ -3,11 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// 주소를 좌표로 변환하는 rest api
 class RestApiService {
+  String? RestApiKey = dotenv.env['KAKAO_REST_KEY'];
+
   // 좌표 받아오기
   Future<LatLng?> getCoordinates(String query) async {
-    String? RestApiKey = dotenv.env['KAKAO_REST_KEY'];
     if (RestApiKey == null) {
       print("KAKAO_REST_KEY가 .env에서 로드되지 않았습니다.");
     }
