@@ -34,6 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int selectedIndex = 0;
   MarkerService? markerService;
   kakao.LatLng? tappedPosition; // 지도 클릭 시 좌표 저장
+  final draggableSheetController = DraggableScrollableController();
 
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     textController.dispose();
+    draggableSheetController.dispose();
     super.dispose();
   }
 
@@ -252,7 +254,8 @@ class _MyHomePageState extends State<MyHomePage> {
           DraggableScrollableSheet( // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
               initialChildSize: 0.1,
               minChildSize: 0.1,
-              maxChildSize: 0.6,
+              maxChildSize: 0.8,
+              controller: draggableSheetController,
               builder: (BuildContext context, ScrollController scrollController) {
                 return Container(
                   decoration: BoxDecoration(
@@ -283,6 +286,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             onPressed: () async { // deleteList 호출
                               await markerService!.deleteList(poi.id);
                               setState(() {});
+                              // 경로 리스트가 비어있으면, 하단 시트의 최소 크기를 0.1로 설정
+                              if (markerService!.pois.isEmpty) {
+                                draggableSheetController.jumpTo(0.1);
+                              }
                             },
                             icon: Icon(Icons.close),
                           ),
