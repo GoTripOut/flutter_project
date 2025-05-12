@@ -46,7 +46,7 @@ class _MainPageState extends State<MainPage>{
               child: Center(
                 child:SizedBox(
                   width: screenWidth * 0.88,
-                  height: screenHeight * 0.9,
+                  height: screenHeight * 0.8,
                   child: RouteListBuilder(routeContent: [['강릉', '2025-04-26']],)
                 ),
               ),

@@ -3,7 +3,8 @@ import 'package:sample_flutter_project/screens/MyHomePage.dart';
 import 'package:sample_flutter_project/screens/favorite_selection_page_1.dart';
 import 'package:sample_flutter_project/screens/favorite_selection_page_3.dart';
 import 'package:sample_flutter_project/screens/intro_page.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'favorite_selection_page_2.dart';
 
 class IntroPageView extends StatefulWidget{
@@ -113,6 +114,7 @@ class _IntroPageViewState extends State<IntroPageView>{
   }
   @override
   Widget build(BuildContext context) {    //페이지뷰 빌드
+    fetchData();
     return Scaffold(
       body: Stack(
         children:[
@@ -130,5 +132,17 @@ class _IntroPageViewState extends State<IntroPageView>{
         ],
       )
     );
+  }
+  Future<void> fetchData() async{
+    final url = Uri.parse('http://10.0.2.2:8000/');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('응답 데이터: $data');
+    } else {
+      print('오류 발생: ${response.statusCode}');
+    }
+
   }
 }

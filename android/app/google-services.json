@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "854262036856",
+    "project_id": "ai-route-recommend-proje-98736",
+    "storage_bucket": "ai-route-recommend-proje-98736.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:854262036856:android:aedb0dfbe4d9025d5ab08d",
+        "android_client_info": {
+          "package_name": "com.example.sample_flutter_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwnhKjVqXKNmG3Ihyr8s3aQ0NTLiYLvWk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
