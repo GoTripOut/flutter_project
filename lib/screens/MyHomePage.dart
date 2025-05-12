@@ -26,15 +26,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   kakao.LatLng? myPosition;
-  kakao.LatLng? recentPosition; // 최근에 클릭한 위치를 저장
+  // 최근에 클릭한 위치를 저장하는 변수 recentPostion
+  kakao.LatLng? recentPosition;
   kakao.KakaoMapController? mapController;
   kakao.LabelController? labelController;
   late TextEditingController textController; // 검색어 입력
   bool mapLoading = false; // 맵 로딩 상태
   int selectedIndex = 0;
   MarkerService? markerService;
-  kakao.LatLng? tappedPosition; // 지도 클릭 시 좌표 저장
-  final draggableSheetController = DraggableScrollableController();
 
   @override
   void initState() {
@@ -46,7 +45,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     textController.dispose();
-    draggableSheetController.dispose();
     super.dispose();
   }
 
@@ -66,29 +64,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // 아래 하단 버튼 눌렀을 때의 동작
-  void _itemTapped(int index) async {
+  void _itemTapped(int index) {
     setState(() {
       selectedIndex = index;
     });
     switch (index) {
       case 0:
-        if (tappedPosition != null) {
-          await markerService!.addRoute(tappedPosition!);
-          setState(() {
-            tappedPosition = null;
-          });
-        }
-        else { // 지도 위의 poi를 클릭하지 않을 경우, 검색한 위치를 기반으로 경로 추가
-          await markerService!.addRoute(recentPosition!);
-          setState(() {}); // UI 갱신
-        }
+        markerService!.addRoute(recentPosition!);
         break;
       case 1:
-          await markerService!.deleteRoute();
-          setState(() {});
+        markerService!.deleteRoute();
         break;
       case 2:
-        await markerService!.resetRoute();
+        markerService!.resetRoute();
 
         // 경로를 초기화하였으므로, 최근 위치를 현재 위치로 설정한다.
         recentPosition = myPosition;
@@ -97,7 +85,6 @@ class _MyHomePageState extends State<MyHomePage> {
         mapController!.moveCamera(
           kakao.CameraUpdate.newCenterPosition(myPosition!),
         );
-        setState(() {}); // UI 갱신
         break;
     }
   }
@@ -149,41 +136,6 @@ class _MyHomePageState extends State<MyHomePage> {
     print('POI ID: ${poi.id}');
   }
 
-  // 다이얼로그
-  Future <void> _showDialog(kakao.Poi poi) async {
-    final TextEditingController textController = TextEditingController(text: poi.text);
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("장소 이름 변경"),
-          content: TextField(
-            controller: textController,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('취소'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            TextButton(
-              child: Text('저장'),
-              onPressed: () async {
-                String newName = textController.text.trim();
-                if (newName.isNotEmpty) {
-                  await markerService!.renamePoi(poi, newName);
-                  setState(() {}); // UI 갱신
-                }
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -203,16 +155,11 @@ class _MyHomePageState extends State<MyHomePage> {
               print("카카오 지도가 정상적으로 불러와졌습니다.");
               _sendPosition();
             },
-            onMapClick: (kakao.KPoint point, kakao.LatLng position) {
-              setState(() {
-                tappedPosition = position;
-              });
-            },
-            onPoiClick: (kakao.LabelController controller, kakao.Poi poi) {
-                labelController = controller;
-                markerService?.selectedPoiId = poi.id;
-                print("poi clicked");
-            },
+            onPoiClick: (kakao.LabelController controller, kakao.Poi poi){    //poi click 시 실행되는 코드
+              labelController = controller;
+              markerService?.selectedPoiId = poi.id;                          //선택된 poi의 id를 markerService로 전송
+              print("poi clicked");
+            }
           ) : const Center(child: CircularProgressIndicator()),
           // 검색창을 지도 위에 겹침
           Positioned(
@@ -232,77 +179,18 @@ class _MyHomePageState extends State<MyHomePage> {
                           contentPadding: EdgeInsets.all(10),
                           hintStyle: TextStyle(fontSize: 13)
                       ),
-                      onSubmitted: (value) { // 키보드의 입력을 완료했을 때
-                        if (!mapLoading) {
-                          _searchPosition();
-                        }
-                      } ,
                     ),
                   ),
                   IconButton(
-                      onPressed: mapLoading ? null : _searchPosition, // 검색 버튼을 눌렀을 때
+                      onPressed: mapLoading ? null : _searchPosition,
                       icon: mapLoading ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
-                      ): Icon(Icons.search)
-                  ),
+                      ): Icon(Icons.search))
                 ],
               ),
             ),
-          ),
-          DraggableScrollableSheet( // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
-              initialChildSize: 0.1,
-              minChildSize: 0.1,
-              maxChildSize: 0.8,
-              controller: draggableSheetController,
-              builder: (BuildContext context, ScrollController scrollController) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(30),
-                      topRight: Radius.circular(30),
-                    ),
-                  ),
-                  child: (markerService != null && markerService!.pois.isNotEmpty)?
-                  ReorderableListView.builder(
-                      onReorder: (oldIndex, newIndex) {
-                        setState(() {
-                          if (oldIndex < newIndex) {
-                            newIndex -= 1;
-                          }
-                          markerService!.reorderList(oldIndex, newIndex);
-                        });
-                      },
-                      scrollController: scrollController,
-                      itemCount: markerService!.pois.length,
-                      itemBuilder: (context, index) {
-                        final poi = markerService!.pois[index];
-                        return ListTile(
-                          key: ValueKey(poi.id),
-                          title: Text(poi.text!),
-                          trailing: IconButton(
-                            onPressed: () async { // deleteList 호출
-                              await markerService!.deleteList(poi.id);
-                              setState(() {});
-                              // 경로 리스트가 비어있으면, 하단 시트의 최소 크기를 0.1로 설정
-                              if (markerService!.pois.isEmpty) {
-                                draggableSheetController.jumpTo(0.1);
-                              }
-                            },
-                            icon: Icon(Icons.close),
-                          ),
-                          onTap: () {
-                            _showDialog(poi); // 다이얼로그 표시
-                          },
-                        );
-                      },
-                  ) : Center(
-                    child : Text("경로 리스트가 비어있습니다"),
-                  ),
-                );
-              },
           ),
         ],
       ),
