@@ -35,16 +35,16 @@ class MarkerService {
           );
         }
       }
+    }
 
-      if (polylines.isNotEmpty) {
-        kakao.Route route = await mapController.routeLayer.addRoute(
-          polylines,
-          kakao.RouteStyle(Colors.blue, 15), // 경로는 파란색으로 표시
-        );
-        myRoute.add(route);
-      } else {
-        print("경로를 표시할 수 없습니다");
-      }
+    if (polylines.isNotEmpty) {
+      kakao.Route route = await mapController.routeLayer.addRoute(
+        polylines,
+        kakao.RouteStyle(Colors.blue, 15), // 경로는 파란색으로 표시
+      );
+      myRoute.add(route);
+    } else {
+      print("경로를 표시할 수 없습니다");
     }
   }
 
@@ -66,7 +66,6 @@ class MarkerService {
       );
       pois.add(poi);
       poiLat.add(recentPosition);
-      //drawPolyline();
       if (poiLat.length >= 2) drawRoute();
       // POI 클릭 이벤트는 MethodChannel을 통해 처리됨
     } catch (e) {
@@ -81,7 +80,6 @@ class MarkerService {
       kakao.Poi selectedPoi = pois.removeAt(index);
       poiLat.removeAt(index);
       await selectedPoi.remove();
-
       // 기존 선 삭제하고 다시 그림
       for (kakao.Route route in myRoute) {
         mapController.routeLayer.removeRoute(route);
