@@ -6,6 +6,8 @@ class MarkerService {
   kakao.KakaoMapController mapController;
   List<kakao.Poi> pois = []; // poi를 저장하는 리스트
   List<kakao.LatLng> poiLat = []; // poi의 좌표 리스트
+  Map<String, String> uturnPoiConnected = {}; // 유턴 poi id, 이와 연결된 poi id
+  List<kakao.Poi> uturnPois = []; // 유턴 poi 리스트
   List<kakao.Route> myRoute = []; // 경로에 포함된 poi 리스트
   String selectedPoiId = "";
 
@@ -35,12 +37,34 @@ class MarkerService {
           );
         }
       }
+      final guides = section["guides"]; // 유턴 정보
+      for (var guide in guides) { // 유턴 지점에 UI 아이콘 추가
+        if (guide["guidance"]?.contains("유턴") == true) {
+          final uturnPosition = kakao.LatLng(guide["y"], guide["x"]);
+          kakao.Poi uturnPoi = await mapController.labelLayer.addPoi(
+              uturnPosition,
+              style: kakao.PoiStyle(
+                icon: kakao.KImage.fromAsset('assets/images/uturn.png', 20, 20),
+              )
+          );
+          uturnPois.add(uturnPoi);
+          if (pois.isNotEmpty) { // 유턴 poi와 가장 최근에 추가된 경로 poi를 연결
+            uturnPoiConnected[uturnPoi.id] = pois.last.id;
+          }
+        }
+      }
     }
 
     if (polylines.isNotEmpty) {
+      if (myRoute.isNotEmpty) { // 기존 경로를 삭제
+        for (var route in myRoute) {
+          await mapController.routeLayer.removeRoute(route);
+        }
+        myRoute.clear();
+      }
       kakao.Route route = await mapController.routeLayer.addRoute(
         polylines,
-        kakao.RouteStyle(Colors.blue, 15), // 경로는 파란색으로 표시
+        kakao.RouteStyle(Colors.blue, 15),
       );
       myRoute.add(route);
     } else {
@@ -50,7 +74,6 @@ class MarkerService {
 
   // 경로 추가
   Future<void> addRoute(kakao.LatLng recentPosition) async {
-    //if (recentPosition == null) return;
     if (poiLat.contains(recentPosition)) {
       print("이미 추가된 위치입니다");
       return;
@@ -80,12 +103,22 @@ class MarkerService {
       kakao.Poi selectedPoi = pois.removeAt(index);
       poiLat.removeAt(index);
       await selectedPoi.remove();
-      // 기존 선 삭제하고 다시 그림
-      for (kakao.Route route in myRoute) {
-        mapController.routeLayer.removeRoute(route);
+
+      List<String> uturnsRemove = []; // 삭제할 경로와 연결된 여러 개의 유턴 poi 리스트
+      uturnPoiConnected.forEach((uturnId, connectedPoiId) {
+        if (connectedPoiId == selectedPoiId) {
+          uturnsRemove.add(uturnId);
+        }
+      });
+
+      for (var uturnId in uturnsRemove) {
+        final uturnRemove = uturnPois.firstWhere((poi) => poi.id == uturnId);
+        await uturnRemove.remove();
+        uturnPois.remove(uturnRemove);
+        uturnPoiConnected.remove(uturnId);
       }
-      myRoute.clear();
-      drawRoute();
+
+      redrawRoute(); // 경로를 다시 그림
     }
   }
 
@@ -95,6 +128,10 @@ class MarkerService {
     for (kakao.Poi poi in pois) {
       await poi.remove();
     }
+    // 유턴 poi 삭제
+    for (kakao.Poi poi in uturnPois) {
+      await poi.remove();
+    }
     // 지도에 그려진 선도 삭제
     for (kakao.Route route in myRoute) {
       mapController.routeLayer.removeRoute(route);
@@ -102,6 +139,8 @@ class MarkerService {
     // 리스트 초기화
     pois.clear();
     poiLat.clear();
+    uturnPois.clear();
+    uturnPoiConnected.clear();
     myRoute.clear();
   }
 
@@ -114,27 +153,30 @@ class MarkerService {
       await selectedPoi.remove();
     }
 
-    // 기존 선 삭제하고 다시 그림
-    for (kakao.Route route in myRoute) {
-      mapController.routeLayer.removeRoute(route);
+    List<String> uturnsRemove = []; // 삭제할 경로와 연결된 여러 개의 유턴 poi 리스트
+    uturnPoiConnected.forEach((uturnId, connectedPoiId) {
+      if (connectedPoiId == selectedPoiId) {
+        uturnsRemove.add(uturnId);
+      }
+    });
+
+    for (var uturnId in uturnsRemove) {
+      final uturnRemove = uturnPois.firstWhere((poi) => poi.id == uturnId);
+      await uturnRemove.remove();
+      uturnPois.remove(uturnRemove);
+      uturnPoiConnected.remove(uturnId);
     }
-    myRoute.clear();
-    drawRoute();
+
+    redrawRoute(); // 경로를 다시 그림
   }
 
   // Poi 리스트 순서 변경
   Future<void> reorderList(int oldIndex, int newIndex) async {
-    // 기존 선 삭제하고 다시 그림
-    for (kakao.Route route in myRoute) {
-      mapController.routeLayer.removeRoute(route);
-    }
-    myRoute.clear();
-
     kakao.Poi prePoi = pois.removeAt(oldIndex);
     kakao.LatLng preLat = poiLat.removeAt(oldIndex);
     pois.insert(newIndex, prePoi);
     poiLat.insert(newIndex, preLat);
-    drawRoute();
+    redrawRoute(); // 경로를 다시 그림
   }
 
   // Poi text 변경
@@ -143,6 +185,26 @@ class MarkerService {
     int index = pois.indexWhere((p) => p.id == poi.id);
     if (index != -1) {
       pois[index] = poi; // 리스트 업데이트
+    }
+  }
+
+  // 기존 경로와 유턴 poi를 삭제하고 다시 경로를 그림
+  Future<void> redrawRoute() async{
+    // 기존 경로 삭제
+    for (var route in myRoute) {
+      await mapController.routeLayer.removeRoute(route);
+    }
+    myRoute.clear();
+
+    // 기존 유턴 poi 삭제
+    for (var poi in uturnPois) {
+      await poi.remove();
+    }
+    uturnPois.clear();
+    uturnPoiConnected.clear();
+
+    if (poiLat.length >= 2) {
+      await drawRoute();
     }
   }
 }
