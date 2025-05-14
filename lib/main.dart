@@ -1,21 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
-import 'package:sample_flutter_project/screens/MyHomePage.dart';
-import 'package:sample_flutter_project/screens/intro_page_view.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
+// import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
+import 'package:sample_flutter_project/screens/login_page.dart';
+import 'package:sample_flutter_project/server_controller.dart';
+import 'dart:io';
+
+void listenFastAPIBroadCast() async {
+  print("get broadcast message");
+  RawDatagramSocket socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 8888);
+  socket.listen((RawSocketEvent event) async {
+    if(event == RawSocketEvent.read){
+      print("read_broadcast_message");
+      Datagram? datagram = socket.receive();
+      if(datagram != null){
+        print("get_datagram");
+        String serverUrl = String.fromCharCodes(datagram.data).trim();
+        print(serverUrl);
+        final response = await http.get(Uri.parse("${serverUrl}get_connect_state"));
+        if(response.statusCode == 200) {
+          print(response.body);
+          Get.find<ServerController>().updateServerUrl(serverUrl);
+        }
+      }
+    }
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: 'assets/config/.env');
   String? kakaoNativeAppKey = dotenv.env['KAKAO_MAP_KEY'];
 
-  if (kakaoNativeAppKey == null) {
-    throw Exception('KAKAO_MAP_KEY가 .env 파일에 정의되지 않았습니다.');
-  }
+  // if (kakaoNativeAppKey == null) {
+  //   throw Exception('KAKAO_MAP_KEY가 .env 파일에 정의되지 않았습니다.');
+  // }
 
-  await kakao.KakaoMapSdk.instance.initialize(kakaoNativeAppKey);
-
+  // await kakao.KakaoMapSdk.instance.initialize(kakaoNativeAppKey);
+  Get.put(ServerController());
+  listenFastAPIBroadCast();
   runApp(const MyApp());
 }
 
@@ -25,7 +50,7 @@ class MyApp extends StatelessWidget {
   // This widgets is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
@@ -46,7 +71,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: SafeArea(
-        child: IntroPageView(),
+        child: LoginPage(),
       ),
     );
   }

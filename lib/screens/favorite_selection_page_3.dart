@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:sample_flutter_project/widgets/toggle_button.dart';
 
-class FavoriteSelectionPage1 extends StatefulWidget {
-  const FavoriteSelectionPage1({super.key});
+class FavoriteSelectionPage3 extends StatefulWidget {
+  const FavoriteSelectionPage3({super.key});
 
   @override
-  State<StatefulWidget> createState() => _FavoriteSelectionPage1State();
+  State<StatefulWidget> createState() => _FavoriteSelectionPage3State();
 }
 
-class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
+class _FavoriteSelectionPage3State extends State<FavoriteSelectionPage3> {
   List<String> selectedButtons = [];
-  List<bool> _isSelected = [false, false, false, false];
+  List<bool> _isSelected = [false, false];
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -43,7 +43,7 @@ class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
                   SizedBox(   //main title
                     width: screenWidth * 0.9, // 화면 너비의 비율로 설정
                     child: Text(
-                      '풍경',
+                      '여행 스타일',
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 48,
@@ -77,36 +77,27 @@ class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
                 runSpacing: 30,
                 children: [
                   ToggleButton(
-                    text: "산",
+                    text: "계획적",
                     onPressed: (){
                       _isSelected[0] = !_isSelected[0];
                       if(_isSelected[0]) {
-                        selectedButtons.add("산");
+                        selectedButtons.add("계획적");
+                      } else{
+                        selectedButtons.remove("계획적");
                       }
                     },
                   ),
                   ToggleButton(
-                    text: "바다",
+                    text: "즉흥적",
                     onPressed: (){
-                      if(!selectedButtons.contains("바다")) {
-                        selectedButtons.add("바다");
+                      _isSelected[1] = !_isSelected[1];
+                      if(_isSelected[1]) {
+                        selectedButtons.add("즉흥적");
+                      } else{
+                        selectedButtons.remove("즉흥적");
                       }
                     },
                   ),
-                  ToggleButton(
-                    text: "평야",
-                    onPressed: (){
-                      if(!selectedButtons.contains("산")) {
-                        selectedButtons.add("산");
-                      }
-                    },
-                  ),
-                  ToggleButton(text: "도심",
-                    onPressed: (){
-                      if(!selectedButtons.contains("산")) {
-                        selectedButtons.add("산");
-                      }
-                    },),
                 ],
               ),
             ),

@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 /// positioned at the bottom right of its container.
 class ToggleButton extends StatefulWidget {
   final String text;
+  final Function onPressed;
   const ToggleButton({
     super.key,
     required this.text,
+    required this.onPressed,
   });
 
   @override
@@ -19,6 +21,7 @@ class _ToggleButtonState extends State<ToggleButton>{
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
+        widget.onPressed;
         setState((){    //상태 변경 및 레이아웃 업데이트
           _isSelected = !_isSelected;
           if(_isSelected) {
