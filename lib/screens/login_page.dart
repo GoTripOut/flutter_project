@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'package:sample_flutter_project/screens/signup_page.dart';
 import 'main_page.dart';
 
@@ -148,8 +149,10 @@ class _LoginState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  InkWell(    //로그인 버튼
+                  InkWell(    //회원 가입 버튼
                     onTap:(){
+                      List<String> placeInfo = ["CE7", "127.743288", "37.872316"];
+                      sendRequest("getPlaceList", placeInfo: placeInfo);
                       Navigator.of(context).push(
                           MaterialPageRoute(builder: (context) => SafeArea(child: SignupPage()))
                       );
