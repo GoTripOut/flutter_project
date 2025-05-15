@@ -37,6 +37,18 @@ class _MyHomePageState extends State<MyHomePage> {
   kakao.LatLng? tappedPosition; // 지도 클릭 시 좌표 저장
   final draggableSheetController = DraggableScrollableController();
 
+  Map<String, String> categoryMap = {
+    "음식점": "FD6",
+    "카페": "CE7",
+    "편의점": "CS2",
+    "관광명소": "AT4",
+    "문화시설": "CT1",
+    "숙박": "AD5",
+    "주차장": "PK6",
+    "주유소,충전소": "OL7",
+    "지하철역": "SW8",
+  };
+
   @override
   void initState() {
     super.initState();
@@ -126,25 +138,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  // 현재 위치를 flask 서버로 전송
-  Future<void> _sendPosition() async{
-    print("현재 위치를 전송합니다 ");
-    final url = Uri.parse("http://192.168.0.33:5000");
-    final response = await http.post(
-      url,
-      headers: {"content-type": "application/json"},
-      body: jsonEncode({
-        "latitude": myPosition!.latitude,
-        "longitude": myPosition!.longitude
-      }),
-    );
-    if (response.statusCode == 200) {
-      print("${response.body}");
-    } else {
-      print("전송 실패: ${response.statusCode}");
-    }
-  }
-
   // 커스텀 함수
   void _handlePoiClick(kakao.Poi poi) {
     print('POI ID: ${poi.id}');
@@ -202,7 +195,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 myRoute: [],
               );
               print("카카오 지도가 정상적으로 불러와졌습니다.");
-              _sendPosition();
             },
             onMapClick: (kakao.KPoint point, kakao.LatLng position) {
               setState(() {
@@ -249,6 +241,39 @@ class _MyHomePageState extends State<MyHomePage> {
                       ): Icon(Icons.search)
                   ),
                 ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 80, // 검색창 아래에 배치
+            left: 10,
+            right: 10,
+            child: SingleChildScrollView( // 화면 크기를 초과할 경우 스크롤 기능
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: categoryMap.keys.map((categoryName) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // 해당 카테고리의 장소 리스트를 검색
+                        print("카테고리 버튼을 눌렀습니다");
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      child: Text(
+                          categoryName,
+                          style: TextStyle(fontSize: 12.0)),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
