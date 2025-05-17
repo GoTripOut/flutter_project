@@ -283,8 +283,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           if (result != null) {
                             final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
                             mapController!.moveCamera(
-                              kakao.CameraUpdate.newCenterPosition(zoomLevel: 5, placePosition)
+                              kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 5)
                             );
+                            // 최근 위치를 리스트에서 클릭한 장소의 위치로 변경한다.
+                            recentPosition = placePosition;
                           }
                         }
                       },
