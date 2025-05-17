@@ -5,6 +5,8 @@ import 'package:sample_flutter_project/marker_service.dart';
 import 'package:sample_flutter_project/position_service.dart';
 import 'package:sample_flutter_project/coordinate_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:sample_flutter_project/fetch_fastapi_data.dart';
+import 'category_place_page.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -48,6 +50,9 @@ class _MyHomePageState extends State<MyHomePage> {
     "주유소,충전소": "OL7",
     "지하철역": "SW8",
   };
+
+  // 캐시 : 가져왔던 장소 리스트를 새로 요청하지 않고 사용
+  Map<String, List<dynamic>> cachedPlaceLists = {};
 
   @override
   void initState() {
@@ -255,9 +260,33 @@ class _MyHomePageState extends State<MyHomePage> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         // 해당 카테고리의 장소 리스트를 검색
-                        print("카테고리 버튼을 눌렀습니다");
+                        final String? categoryCode = categoryMap[categoryName];
+                        final response = await sendRequest(
+                          'getPlaceList',
+                          placeInfo: [categoryCode!,
+                            myPosition!.longitude.toString(),
+                            myPosition!.latitude.toString()],
+                        );
+                        if (response.isNotEmpty) {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CategoryPlaceListPage(
+                                categoryName: categoryName,
+                                placesJson: response,
+                              ),
+                            ),
+                          );
+                          // category_place_page에서 탭했을 때 좌표를 넘겨받음
+                          if (result != null) {
+                            final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
+                            mapController!.moveCamera(
+                              kakao.CameraUpdate.newCenterPosition(zoomLevel: 5, placePosition)
+                            );
+                          }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -276,6 +305,21 @@ class _MyHomePageState extends State<MyHomePage> {
                 }).toList(),
               ),
             ),
+          ),
+          Positioned( // 현재 위치로 돌아오는 버튼
+            width: 40,
+            height: 40,
+            bottom: 80.0, // 모달 시트의 초기 높이 + 약간의 여백을 고려
+            right: 16.0,
+            child: FloatingActionButton(onPressed: () {
+              if (myPosition != null) {
+                mapController!.moveCamera(
+                  kakao.CameraUpdate.newCenterPosition(myPosition!),
+                );
+              }
+            },
+            child: const Icon(Icons.my_location),
+            )
           ),
           DraggableScrollableSheet( // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
             initialChildSize: 0.1,
