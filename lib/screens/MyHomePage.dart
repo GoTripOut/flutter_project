@@ -7,8 +7,6 @@ import 'package:sample_flutter_project/coordinate_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'category_place_page.dart';
-import 'package:sample_flutter_project/server_controller.dart';
-import 'package:get/get.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -54,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
   };
 
   // 캐시 : 가져왔던 장소 리스트를 새로 요청하지 않고 사용
-  Map<String, List<dynamic>> cachedPlaceList = {};
+  Map<String, List<dynamic>> cachedPlaceLists = {};
 
   @override
   void initState() {
@@ -264,46 +262,32 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: ElevatedButton(
                       onPressed: () async {
                         // 해당 카테고리의 장소 리스트를 검색
-                        final serverController = Get.find<ServerController>();
-
-                        // 요청이 진행 중이면 새로 요청 x
-                        if (serverController.isLoading.isTrue) {
-                          print("요청이 진행 중입니다");
-                          return;
-                        }
-
-                        serverController.isLoading.value = true; // 요청 시작
-                        try {
-                          final String? categoryCode = categoryMap[categoryName];
-                          final response = await sendRequest(
+                        final String? categoryCode = categoryMap[categoryName];
+                        final response = await sendRequest(
                           'getPlaceList',
                           placeInfo: [categoryCode!,
-                          myPosition!.longitude.toString(),
-                          myPosition!.latitude.toString()],
-                          );
-                          if (response.isNotEmpty) {
-                            final result = await Navigator.push(
+                            myPosition!.longitude.toString(),
+                            myPosition!.latitude.toString()],
+                        );
+                        if (response.isNotEmpty) {
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => CategoryPlaceListPage(
-                              categoryName: categoryName,
-                              placesJson: response,),
+                                categoryName: categoryName,
+                                placesJson: response,
+                              ),
                             ),
+                          );
+                          // category_place_page에서 탭했을 때 좌표를 넘겨받음
+                          if (result != null) {
+                            final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
+                            mapController!.moveCamera(
+                              kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 5)
                             );
-                            // category_place_page에서 탭했을 때 좌표를 넘겨받음
-                            if (result != null) {
-                              final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
-                              mapController!.moveCamera(
-                              kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 15)
-                              );
-                              // 최근 위치를 리스트에서 클릭한 장소의 위치로 변경한다.
-                              recentPosition = placePosition;
-                            }
+                            // 최근 위치를 리스트에서 클릭한 장소의 위치로 변경한다.
+                            recentPosition = placePosition;
                           }
-                        } catch (e) {
-                          print("장소 요청 실패");
-                        } finally {
-                          serverController.isLoading.value = false; // 요청 완료
                         }
                       },
                       style: ElevatedButton.styleFrom(
