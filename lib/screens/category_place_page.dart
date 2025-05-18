@@ -45,7 +45,12 @@ class CategoryPlaceListPage extends StatelessWidget {
       appBar: AppBar(
         title: Row(
         children: [
-          Text('$categoryName 주변 장소'),
+          Text('$categoryName 주변 장소',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
           const SizedBox(width: 8.0), // 텍스트와 아이콘 사이 간격
           if (categoryIcon != null) categoryIcon,
         ],
@@ -58,17 +63,48 @@ class CategoryPlaceListPage extends StatelessWidget {
           final String placeName = place['store_name'];
           final double latitude = place['y'];
           final double longitude = place['x'];
+          final status = place['status'];
+          final status_description = place['status_description'];
+          final visitorReviewScore = place['visitorReviewScore'];
+          final visitorReviewCount = place['visitorReviewCount'];
 
           return ListTile(
-            title: Text(placeName),
-            subtitle: Text(
-                '위도: ${latitude}, 경도: ${longitude}'),
-            onTap: () {
-              Navigator.pop(context, {'latitude': latitude, 'longitude': longitude});
-            },
-          );
-        }
-      ) : Center(
+              title: Row(
+                children: [
+                  Text(placeName),
+                  const SizedBox(width: 12.0,),
+                  if (visitorReviewScore != null)
+                    Text(
+                      '$visitorReviewScore (${visitorReviewCount != null ? visitorReviewCount : 0})',
+                      style: const TextStyle(fontSize: 12.0),
+                    ),
+                  const Spacer(), // 아이콘을 오른쪽 끝으로
+                  IconButton(
+                    iconSize: 15.0,
+                    icon: const Icon(Icons.arrow_forward_ios),
+                    onPressed: () {
+                      Navigator.pop(context,
+                          {'latitude': latitude, 'longitude': longitude});
+                    },
+                  ),
+                ],
+              ),
+              subtitle: Row(
+                children: [
+                  if (status != null)
+                    Text(status, style: TextStyle(
+                      fontSize: 11,
+                      color: status == '오늘 휴무' ? Colors.red : Colors.black,),
+                    ),
+                  const SizedBox(width: 8.0),
+                  if (status_description != null)
+                    Text(
+                      status_description,
+                      style: const TextStyle(fontSize: 12.0),
+                    ),
+                ],
+              ));
+        }) : Center(
         child: Text("검색 결과가 없습니다")
       ),
     );
