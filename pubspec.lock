@@ -142,6 +142,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
+  flutter_rating_bar:
+    dependency: "direct main"
+    description:
+      name: flutter_rating_bar
+      sha256: d2af03469eac832c591a1eba47c91ecc871fe5708e69967073c043b2d775ed93
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.1"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -228,10 +236,10 @@ packages:
     dependency: "direct main"
     description:
       name: kakao_map_sdk
-      sha256: "5518f127a6696ed6a7eb9042a59a489fc44b066df02e3e9f6a0b418636f17ff0"
+      sha256: fb2c9591fd9673a56b7cf13a8f235f2e05f0b557dacf13e1445c3bd64e381dc5
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.0"
+    version: "1.1.0"
   leak_tracker:
     dependency: transitive
     description:
