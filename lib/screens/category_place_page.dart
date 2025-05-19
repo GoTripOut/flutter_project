@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-class CategoryPlaceListPage extends StatelessWidget {
+class CategoryPlaceListPage extends StatefulWidget {
   final String categoryName;
   final String placesJson;
 
@@ -10,6 +11,25 @@ class CategoryPlaceListPage extends StatelessWidget {
     required this.categoryName,
     required this.placesJson,
   });
+
+  @override
+  State<CategoryPlaceListPage> createState() => _CategoryPlaceListPageState();
+}
+
+class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
+  List<dynamic> placeList = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    placeList = jsonDecode(widget.placesJson);
+    placeList.sort((a, b) { // AI_score별로 정렬
+      final score_a = a['AI_score'] ?? -1; // null일 경우 -1로 처리 
+      final score_b = b['AI_score'] ?? -1;
+      return score_b.compareTo(score_a);
+    });
+  }
 
   Icon? _getCategoryIcon(String category) {
     switch (category) {
@@ -38,74 +58,98 @@ class CategoryPlaceListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<dynamic> placeList = jsonDecode(placesJson);
-    final categoryIcon = _getCategoryIcon(categoryName);
+    final categoryIcon = _getCategoryIcon(widget.categoryName);
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-        children: [
-          Text('$categoryName 주변 장소',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(width: 8.0), // 텍스트와 아이콘 사이 간격
-          if (categoryIcon != null) categoryIcon,
-        ],
-      )),
+          title: Row(
+            children: [
+              Text('${widget.categoryName} 주변 장소',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(width: 8.0), // 텍스트와 아이콘 사이 간격
+              if (categoryIcon != null) categoryIcon,
+            ],
+          )),
       body: placeList.isNotEmpty
           ? ListView.builder(
-        itemCount: placeList.length,
-        itemBuilder: (context, index) {
-          final place = placeList[index];
-          final String placeName = place['store_name'];
-          final double latitude = place['y'];
-          final double longitude = place['x'];
-          final status = place['status'];
-          final status_description = place['status_description'];
-          final visitorReviewScore = place['visitorReviewScore'];
-          final visitorReviewCount = place['visitorReviewCount'];
+          itemCount: placeList.length,
+          itemBuilder: (context, index) {
+            final place = placeList[index];
+            final String placeName = place['store_name'];
+            final double latitude = place['y'];
+            final double longitude = place['x'];
+            final status = place['status'];
+            final status_description = place['status_description'];
+            final visitorReviewScore = place['visitorReviewScore'];
+            final visitorReviewCount = place['visitorReviewCount'];
+            final ai_score = place['AI_score'] ?? -1; // null일 경우 -1
 
-          return ListTile(
-              title: Row(
-                children: [
-                  Text(placeName),
-                  const SizedBox(width: 12.0,),
-                  if (visitorReviewScore != null)
-                    Text(
-                      '$visitorReviewScore (${visitorReviewCount != null ? visitorReviewCount : 0})',
-                      style: const TextStyle(fontSize: 12.0),
+            double rating = 0;
+            if (visitorReviewScore != null) {
+              rating = double.tryParse(visitorReviewScore) ?? 0.0;
+            }
+
+            return ListTile(
+                title: Row(
+                  children: [
+                    Text(placeName),
+                    const SizedBox(width: 3.0,),
+                    if (visitorReviewScore != null)
+                      RatingBarIndicator(
+                        rating: rating,
+                        itemBuilder: (context, _) => const Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                        ),
+                        itemCount: 5,
+                        itemSize: 10.0,
+                        direction: Axis.horizontal, // 별들 가로로 배치
+                      ),
+                    const SizedBox(width: 3.0), // 별점과 점수 사이의 공간 추가
+                      if (visitorReviewScore != null)
+                      Text(
+                        '$visitorReviewScore (${visitorReviewCount != null ? "리뷰 ${visitorReviewCount}개" : 0})',
+                        style: const TextStyle(fontSize: 12.0),
+                      ),
+                    const Spacer(), // 아이콘을 오른쪽 끝으로
+                    IconButton(
+                      iconSize: 15.0,
+                      icon: const Icon(Icons.arrow_forward_ios),
+                      onPressed: () {
+                        Navigator.pop(context,
+                            {'latitude': latitude, 'longitude': longitude});
+                      },
                     ),
-                  const Spacer(), // 아이콘을 오른쪽 끝으로
-                  IconButton(
-                    iconSize: 15.0,
-                    icon: const Icon(Icons.arrow_forward_ios),
-                    onPressed: () {
-                      Navigator.pop(context,
-                          {'latitude': latitude, 'longitude': longitude});
-                    },
-                  ),
-                ],
-              ),
-              subtitle: Row(
-                children: [
-                  if (status != null)
-                    Text(status, style: TextStyle(
-                      fontSize: 11,
-                      color: status == '오늘 휴무' ? Colors.red : Colors.black,),
-                    ),
-                  const SizedBox(width: 8.0),
-                  if (status_description != null)
-                    Text(
-                      status_description,
-                      style: const TextStyle(fontSize: 12.0),
-                    ),
-                ],
-              ));
-        }) : Center(
-        child: Text("검색 결과가 없습니다")
+                  ],
+                ),
+                subtitle: Row(
+                  children: [ // ai_score가 null이면 -1이지만, 사용자에게는 0으로 보여줌
+                      Text("AI Score : ${ai_score != -1 ? ai_score : 0},   ", style: TextStyle(
+                        fontSize: 11,),
+                      ),
+                    if (status != null)
+                      Text(status, style: TextStyle(
+                        fontSize: 11,
+                        color: status == '오늘 휴무' || status == '영업 종료'
+                        ? Colors.red : Colors.black,),
+                      ),
+                    if (status == null)
+                      Text("영업 정보가 없습니다", style: TextStyle(
+                          fontSize: 11)),
+                    const SizedBox(width: 8.0),
+                    if (status_description != null)
+                      Text(
+                        status_description,
+                        style: const TextStyle(fontSize: 12.0),
+                      ),
+                  ],
+                ));
+          }) : Center(
+          child: Text("검색 결과가 없습니다")
       ),
     );
   }
