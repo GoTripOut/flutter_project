@@ -25,8 +25,8 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
 
     placeList = jsonDecode(widget.placesJson);
     placeList.sort((a, b) { // AI_score별로 정렬
-      final score_a = a['AI_score'] ?? -1; // null일 경우 -1로 처리 
-      final score_b = b['AI_score'] ?? -1;
+      final score_a = a['AI_score'];
+      final score_b = b['AI_score'];
       return score_b.compareTo(score_a);
     });
   }
@@ -86,7 +86,7 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
             final status_description = place['status_description'];
             final visitorReviewScore = place['visitorReviewScore'];
             final visitorReviewCount = place['visitorReviewCount'];
-            final ai_score = place['AI_score'] ?? -1; // null일 경우 -1
+            final ai_score = place['AI_score'];
 
             double rating = 0;
             if (visitorReviewScore != null) {
@@ -112,7 +112,7 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
                     const SizedBox(width: 3.0), // 별점과 점수 사이의 공간 추가
                       if (visitorReviewScore != null)
                       Text(
-                        '$visitorReviewScore (${visitorReviewCount != null ? "리뷰 ${visitorReviewCount}개" : 0})',
+                        '$visitorReviewScore (${visitorReviewCount != null ? "${visitorReviewCount}" : 0})',
                         style: const TextStyle(fontSize: 12.0),
                       ),
                     const Spacer(), // 아이콘을 오른쪽 끝으로
@@ -127,8 +127,8 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
                   ],
                 ),
                 subtitle: Row(
-                  children: [ // ai_score가 null이면 -1이지만, 사용자에게는 0으로 보여줌
-                      Text("AI Score : ${ai_score != -1 ? ai_score : 0},   ", style: TextStyle(
+                  children: [
+                      Text("AI Score : ${ai_score}점,   ", style: TextStyle(
                         fontSize: 11,),
                       ),
                     if (status != null)

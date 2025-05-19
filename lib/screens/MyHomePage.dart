@@ -185,6 +185,26 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // 카테고리 장소 리스트 화면으로 이동하고 결과를 처리
+  Future<void> _moveCategoryPlacePage(String categoryName, String placesJson) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CategoryPlaceListPage(
+          categoryName: categoryName,
+          placesJson: placesJson,
+        ),
+      ),
+    );
+    if (result != null) {
+      final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
+      mapController!.moveCamera(
+        kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 16),
+      );
+      recentPosition = placePosition;
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -270,6 +290,14 @@ class _MyHomePageState extends State<MyHomePage> {
                           print("요청이 진행 중입니다");
                           return;
                         }
+
+                        // 이미 한 번 요청되었으면 캐시된 것을 사용
+                        if (cachedPlaceList.containsKey(categoryName)) {
+                          print("이미 요청된 카테고리입니다");
+                          _moveCategoryPlacePage(categoryName, jsonEncode(cachedPlaceList[categoryName]));
+                          return;
+                        }
+
                         serverController.isLoading.value = true; // 요청 시작
                         try {
                           final String? categoryCode = categoryMap[categoryName];
@@ -280,22 +308,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             myPosition!.latitude.toString()],
                           );
                           if (response.isNotEmpty) {
-                            final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                            builder: (context) => CategoryPlaceListPage(
-                              categoryName: categoryName,
-                              placesJson: response,),
-                            ));
-                            // category_place_page에서 탭했을 때 좌표를 넘겨받음
-                            if (result != null) {
-                              final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
-                              mapController!.moveCamera(
-                                kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 15)
-                              );
-                              // 최근 위치를 리스트에서 클릭한 장소의 위치로 변경한다.
-                              recentPosition = placePosition;
-                            }
+                            cachedPlaceList[categoryName] = jsonDecode(response);
+                            _moveCategoryPlacePage(categoryName, response);
                           }
                         } catch (e) {
                           print("장소 요청 실패");
