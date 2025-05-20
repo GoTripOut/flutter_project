@@ -96,7 +96,13 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
             return ListTile(
                 title: Row(
                   children: [
-                    Text(placeName),
+                    placeName.length > 15?
+                    Expanded(
+                      child: Text(
+                        placeName,
+                        overflow: TextOverflow.ellipsis, // 장소명이 길면 ... 처리
+                      ),
+                    ) : Text(placeName),
                     const SizedBox(width: 3.0,),
                     if (visitorReviewScore != null)
                       RatingBarIndicator(

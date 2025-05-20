@@ -4,7 +4,6 @@ import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
 import 'package:sample_flutter_project/marker_service.dart';
 import 'package:sample_flutter_project/position_service.dart';
 import 'package:sample_flutter_project/coordinate_service.dart';
-import 'package:http/http.dart' as http;
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'category_place_page.dart';
 import 'package:sample_flutter_project/server_controller.dart';
@@ -42,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final draggableSheetController = DraggableScrollableController();
   String? tappedPlaceName; // poi 이름
 
+  List<kakao.LatLng> visitedPosition = []; // 방문했던 위치들을 저장하는 스택
   Map<String, String> categoryMap = {
     "음식점": "FD6",
     "카페": "CE7",
@@ -56,6 +56,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 캐시 : 가져왔던 장소 리스트를 새로 요청하지 않고 사용
   Map<String, List<dynamic>> cachedPlaceList = {};
+
+  // 위도, 경도 비교
+  bool _isSameLatLng(kakao.LatLng pos1, kakao.LatLng pos2) {
+    return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
+  }
 
   @override
   void initState() {
@@ -82,6 +87,8 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         myPosition = position;
         recentPosition = position;
+        visitedPosition.clear();
+        visitedPosition.add(position); // 초기 위치를 추가
       });
     }
   }
@@ -93,16 +100,30 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     switch (index) {
       case 0:
+        kakao.LatLng targetPosition;
         if (tappedPosition != null) {
-          await markerService!.addRoute(tappedPosition!, tappedPlaceName);
-          setState(() {
-            tappedPosition = null;
-          });
+          targetPosition = tappedPosition!;
         }
         else { // 지도 위의 poi를 클릭하지 않을 경우, 검색한 위치를 기반으로 경로 추가
-          await markerService!.addRoute(recentPosition!, tappedPlaceName);
-          setState(() {}); // UI 갱신
+          targetPosition = recentPosition!;
         }
+
+        setState(() {
+          if (visitedPosition.isNotEmpty && _isSameLatLng(visitedPosition.last, recentPosition!)) {
+            // 현재 recentPosition이 이전 위치와 다를 때 스택에 추가
+            visitedPosition.add(recentPosition!);
+          } else if (visitedPosition.isEmpty) { // 스택이 초기화될 경우
+            visitedPosition.add(recentPosition!);
+          }
+          recentPosition = targetPosition; // 새로운 위치로 업데이트
+          visitedPosition.add(recentPosition!);
+        }); // UI 갱신
+
+        await markerService!.addRoute(targetPosition, tappedPlaceName);
+        setState(() {
+          tappedPosition = null;
+          tappedPlaceName = null;
+        });
         break;
       case 1:
         await markerService!.deleteRoute();
@@ -111,15 +132,16 @@ class _MyHomePageState extends State<MyHomePage> {
       case 2:
         await markerService!.resetRoute();
 
-        // 경로를 초기화하였으므로, 최근 위치를 현재 위치로 설정한다.
-        recentPosition = myPosition;
-
         // 경로를 초기화하였으므로, 다시 현재 위치로 카메라를 돌아오게 한다.
         mapController!.moveCamera(
           kakao.CameraUpdate.newCenterPosition(myPosition!),
         );
         setState(() {
+          recentPosition = myPosition; // 최근 위치를 현재 위치로 설정
+          visitedPosition.clear();
+          visitedPosition.add(myPosition!);
           tappedPlaceName = null;
+          tappedPosition = null;
         }); // UI 갱신
         break;
     }
@@ -137,7 +159,13 @@ class _MyHomePageState extends State<MyHomePage> {
     kakao.LatLng? result = await RestApiService().getCoordinates(query);
     if (result != null) {
       setState(() {
-        recentPosition = result;
+        if (visitedPosition.isNotEmpty && !_isSameLatLng(visitedPosition.last, recentPosition!)) {
+          visitedPosition.add(recentPosition!);
+        } else if (visitedPosition.isEmpty) { // 스택이 비어있는 경우
+          visitedPosition.add(recentPosition!);
+        }
+        recentPosition = result; // 새로운 위치로 업데이트
+        visitedPosition.add(recentPosition!); // 새로운 위치를 스택에 푸시
       });
       mapController!.moveCamera(
         kakao.CameraUpdate.newCenterPosition(recentPosition!),
@@ -206,8 +234,14 @@ class _MyHomePageState extends State<MyHomePage> {
         kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 16),
       );
       setState(() {
+        if (visitedPosition.isNotEmpty && !_isSameLatLng(visitedPosition.last, recentPosition!)) {
+          visitedPosition.add(recentPosition!);
+        } else if (visitedPosition.isEmpty) { // 스택이 비어있는 경우
+          visitedPosition.add(recentPosition!);
+        }
         tappedPlaceName = placeName;
         recentPosition = placePosition;
+        visitedPosition.add(recentPosition!);
       });
     }
   }
@@ -302,10 +336,14 @@ class _MyHomePageState extends State<MyHomePage> {
                           return;
                         }
 
+                        final currentLat = recentPosition!.latitude.toStringAsFixed(6); // 소수점 6자리까지
+                        final currentLon = recentPosition!.longitude.toStringAsFixed(6); // 소수점 6자리까지
+                        final cacheKey = '$categoryName-$currentLat-$currentLon';
+
                         // 이미 한 번 요청되었으면 캐시된 것을 사용
-                        if (cachedPlaceList.containsKey(categoryName)) {
+                        if (cachedPlaceList.containsKey(cacheKey)) {
                           print("이미 요청된 카테고리입니다");
-                          _moveCategoryPlacePage(categoryName, jsonEncode(cachedPlaceList[categoryName]));
+                          _moveCategoryPlacePage(categoryName, jsonEncode(cachedPlaceList[cacheKey]));
                           return;
                         }
 
@@ -315,11 +353,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           final response = await sendRequest(
                             'getPlaceList',
                             placeInfo: [categoryCode!,
-                            myPosition!.longitude.toString(),
-                            myPosition!.latitude.toString()],
+                            recentPosition!.longitude.toString(),
+                            recentPosition!.latitude.toString()],
                           );
                           if (response.isNotEmpty) {
-                            cachedPlaceList[categoryName] = jsonDecode(response);
+                            cachedPlaceList[cacheKey] = jsonDecode(response);
                             _moveCategoryPlacePage(categoryName, response);
                           }
                         } catch (e) {
@@ -346,17 +384,26 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
-          Positioned( // 현재 위치로 돌아오는 버튼
+          Positioned( // 처음 위치로 돌아오는 버튼
             width: 40,
             height: 40,
             bottom: 80.0, // 모달 시트의 초기 높이 + 약간의 여백을 고려
             right: 16.0,
-            child: FloatingActionButton(onPressed: () {
+            child: FloatingActionButton(
+              heroTag: 'myLocation',
+              onPressed: () {
               if (myPosition != null) {
                 mapController!.moveCamera(
                   kakao.CameraUpdate.newCenterPosition(myPosition!),
                 );
               }
+              setState(() {
+                recentPosition = myPosition;
+                visitedPosition.clear();
+                visitedPosition.add(myPosition!);
+                tappedPosition = null;
+                tappedPlaceName = null;
+              });
             },
             child: const Icon(Icons.my_location),
             )
@@ -367,9 +414,24 @@ class _MyHomePageState extends State<MyHomePage> {
               bottom: 80.0,
               left: 16.0,
               child: FloatingActionButton(
+                heroTag: 'back',
                 child: const Icon(Icons.arrow_back),
                 onPressed: () {
-                  print("뒤로가기 버튼");
+                  setState(() {
+                    if (visitedPosition.length > 1) {
+                      visitedPosition.removeLast(); // 현재 위치를 스택에서 제거
+                      recentPosition = visitedPosition.last; // 스택의 마지막 (이전 위치)로 업데이트
+                      mapController!.moveCamera(
+                        kakao.CameraUpdate.newCenterPosition(recentPosition!),
+                      );
+                      tappedPosition = null; // 뒤로 갈 때는 클릭 위치 초기화
+                      tappedPlaceName = null; // 뒤로 갈 때는 클릭 이름 초기화
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("초기 위치입니다")),
+                      );
+                    }
+                  });
                 })
           ),
           DraggableScrollableSheet( // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트

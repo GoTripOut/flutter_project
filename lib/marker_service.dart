@@ -155,7 +155,7 @@ class MarkerService {
 
     List<String> uturnsRemove = []; // 삭제할 경로와 연결된 여러 개의 유턴 poi 리스트
     uturnPoiConnected.forEach((uturnId, connectedPoiId) {
-      if (connectedPoiId == selectedPoiId) {
+      if (connectedPoiId == poiId) {
         uturnsRemove.add(uturnId);
       }
     });
