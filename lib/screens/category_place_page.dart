@@ -121,7 +121,7 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
                       icon: const Icon(Icons.arrow_forward_ios),
                       onPressed: () {
                         Navigator.pop(context,
-                            {'latitude': latitude, 'longitude': longitude});
+                            {'latitude': latitude, 'longitude': longitude, 'name': placeName});
                       },
                     ),
                   ],

@@ -73,7 +73,7 @@ class MarkerService {
   }
 
   // 경로 추가
-  Future<void> addRoute(kakao.LatLng recentPosition) async {
+  Future<void> addRoute(kakao.LatLng recentPosition, poiName) async {
     if (poiLat.contains(recentPosition)) {
       print("이미 추가된 위치입니다");
       return;
@@ -85,7 +85,7 @@ class MarkerService {
         style: kakao.PoiStyle(
           icon: kakao.KImage.fromAsset('assets/images/marker.png', 30, 30),
         ),
-        text: "경로",
+        text: poiName ?? "경로",
       );
       pois.add(poi);
       poiLat.add(recentPosition);

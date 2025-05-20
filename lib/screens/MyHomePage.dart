@@ -40,6 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   MarkerService? markerService;
   kakao.LatLng? tappedPosition; // 지도 클릭 시 좌표 저장
   final draggableSheetController = DraggableScrollableController();
+  String? tappedPlaceName; // poi 이름
 
   Map<String, String> categoryMap = {
     "음식점": "FD6",
@@ -93,13 +94,13 @@ class _MyHomePageState extends State<MyHomePage> {
     switch (index) {
       case 0:
         if (tappedPosition != null) {
-          await markerService!.addRoute(tappedPosition!);
+          await markerService!.addRoute(tappedPosition!, tappedPlaceName);
           setState(() {
             tappedPosition = null;
           });
         }
         else { // 지도 위의 poi를 클릭하지 않을 경우, 검색한 위치를 기반으로 경로 추가
-          await markerService!.addRoute(recentPosition!);
+          await markerService!.addRoute(recentPosition!, tappedPlaceName);
           setState(() {}); // UI 갱신
         }
         break;
@@ -117,7 +118,9 @@ class _MyHomePageState extends State<MyHomePage> {
         mapController!.moveCamera(
           kakao.CameraUpdate.newCenterPosition(myPosition!),
         );
-        setState(() {}); // UI 갱신
+        setState(() {
+          tappedPlaceName = null;
+        }); // UI 갱신
         break;
     }
   }
@@ -197,11 +200,15 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
     if (result != null) {
+      final placeName = result['name'];
       final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
       mapController!.moveCamera(
         kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 16),
       );
-      recentPosition = placePosition;
+      setState(() {
+        tappedPlaceName = placeName;
+        recentPosition = placePosition;
+      });
     }
   }
 
@@ -226,11 +233,15 @@ class _MyHomePageState extends State<MyHomePage> {
             onMapClick: (kakao.KPoint point, kakao.LatLng position) {
               setState(() {
                 tappedPosition = position;
+                tappedPlaceName = null;
               });
             },
             onPoiClick: (kakao.LabelController controller, kakao.Poi poi) {
               labelController = controller;
               markerService?.selectedPoiId = poi.id;
+              setState(() {
+                tappedPlaceName = null;
+              });
               print("poi clicked");
             },
           ) : const Center(child: CircularProgressIndicator()),
@@ -349,6 +360,17 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             child: const Icon(Icons.my_location),
             )
+          ),
+          Positioned( // 이전 장소로 돌아오는 버튼 (왼쪽 아래)
+              width: 40,
+              height: 40,
+              bottom: 80.0,
+              left: 16.0,
+              child: FloatingActionButton(
+                child: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  print("뒤로가기 버튼");
+                })
           ),
           DraggableScrollableSheet( // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
             initialChildSize: 0.1,
