@@ -33,22 +33,26 @@ class MarkerService {
         for (int i = 0; i < vertices.length; i += 2) {
           polylines.add(
             kakao.LatLng(
-                vertices[i + 1], vertices[i]), // 경도, 위도 순서로 되어있어서 바꿔야 함
+              vertices[i + 1],
+              vertices[i],
+            ), // 경도, 위도 순서로 되어있어서 바꿔야 함
           );
         }
       }
       final guides = section["guides"]; // 유턴 정보
-      for (var guide in guides) { // 유턴 지점에 UI 아이콘 추가
+      for (var guide in guides) {
+        // 유턴 지점에 UI 아이콘 추가
         if (guide["guidance"]?.contains("유턴") == true) {
           final uturnPosition = kakao.LatLng(guide["y"], guide["x"]);
           kakao.Poi uturnPoi = await mapController.labelLayer.addPoi(
-              uturnPosition,
-              style: kakao.PoiStyle(
-                icon: kakao.KImage.fromAsset('assets/images/uturn.png', 20, 20),
-              )
+            uturnPosition,
+            style: kakao.PoiStyle(
+              icon: kakao.KImage.fromAsset('assets/images/uturn.png', 20, 20),
+            ),
           );
           uturnPois.add(uturnPoi);
-          if (pois.isNotEmpty) { // 유턴 poi와 가장 최근에 추가된 경로 poi를 연결
+          if (pois.isNotEmpty) {
+            // 유턴 poi와 가장 최근에 추가된 경로 poi를 연결
             uturnPoiConnected[uturnPoi.id] = pois.last.id;
           }
         }
@@ -56,7 +60,8 @@ class MarkerService {
     }
 
     if (polylines.isNotEmpty) {
-      if (myRoute.isNotEmpty) { // 기존 경로를 삭제
+      if (myRoute.isNotEmpty) {
+        // 기존 경로를 삭제
         for (var route in myRoute) {
           await mapController.routeLayer.removeRoute(route);
         }
@@ -189,7 +194,7 @@ class MarkerService {
   }
 
   // 기존 경로와 유턴 poi를 삭제하고 다시 경로를 그림
-  Future<void> redrawRoute() async{
+  Future<void> redrawRoute() async {
     // 기존 경로 삭제
     for (var route in myRoute) {
       await mapController.routeLayer.removeRoute(route);
