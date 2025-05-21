@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
+import 'package:sample_flutter_project/global_value_controller.dart';
 import 'package:sample_flutter_project/marker_service.dart';
 import 'package:sample_flutter_project/position_service.dart';
 import 'package:sample_flutter_project/coordinate_service.dart';
-import 'package:http/http.dart' as http;
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'category_place_page.dart';
-import 'package:sample_flutter_project/server_controller.dart';
 import 'package:get/get.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -29,6 +28,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final globalValueController = Get.find<GlobalValueController>();
   kakao.LatLng? myPosition;
   // 최근에 클릭한 위치를 저장하는 변수 recentPostion
   kakao.LatLng? recentPosition;
@@ -59,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _initializePosition();
+    _selectedPlacePosition();
     textController = TextEditingController();
   }
 
@@ -77,6 +77,17 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
     kakao.LatLng? position = await PositionService().getPosition();
+    if (position != null) {
+      setState(() {
+        myPosition = position;
+        recentPosition = position;
+      });
+    }
+  }
+
+  void _selectedPlacePosition() async {
+    String query = globalValueController.selectedPlace.value;
+    kakao.LatLng? position = await RestApiService().getCoordinates(query);
     if (position != null) {
       setState(() {
         myPosition = position;
@@ -205,6 +216,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -284,9 +296,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: ElevatedButton(
                       onPressed: () async {
                         // 해당 카테고리의 장소 리스트를 검색
-                        final serverController = Get.find<ServerController>();
                         // 요청이 진행 중이면 새로 요청 x
-                        if (serverController.isLoading.isTrue) {
+                        if (globalValueController.isLoading.isTrue) {
                           print("요청이 진행 중입니다");
                           return;
                         }
@@ -298,7 +309,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           return;
                         }
 
-                        serverController.isLoading.value = true; // 요청 시작
+                        globalValueController.isLoading.value = true; // 요청 시작
                         try {
                           final String? categoryCode = categoryMap[categoryName];
                           final response = await sendRequest(
@@ -314,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         } catch (e) {
                           print("장소 요청 실패");
                         } finally {
-                          serverController.isLoading.value = false; // 요청 완료
+                          globalValueController.isLoading.value = false; // 요청 완료
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -342,6 +353,7 @@ class _MyHomePageState extends State<MyHomePage> {
             right: 16.0,
             child: FloatingActionButton(onPressed: () {
               if (myPosition != null) {
+                _initializePosition();
                 mapController!.moveCamera(
                   kakao.CameraUpdate.newCenterPosition(myPosition!),
                 );
