@@ -353,6 +353,7 @@ class _MyHomePageState extends State<MyHomePage> {
             right: 16.0,
             child: FloatingActionButton(onPressed: () {
               if (myPosition != null) {
+                _initializePosition();
                 mapController!.moveCamera(
                   kakao.CameraUpdate.newCenterPosition(myPosition!),
                 );
