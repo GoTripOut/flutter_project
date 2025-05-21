@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
 
 import '../global_value_controller.dart';
-import '../screens/intro_page_view.dart';
 import 'calendar_widget.dart';
 
 class RouteContainer extends StatefulWidget{

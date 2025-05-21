@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 class GlobalValueController extends GetxController{
   var serverUrl = "".obs;
+  var isLoading = false.obs; // 요청 진행중
   var userID = "".obs;
   var placeList = [].obs;
   var introPageIndex = 0.obs;
