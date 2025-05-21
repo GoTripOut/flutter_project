@@ -286,6 +286,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               )
               : const Center(child: CircularProgressIndicator()),
+          Obx(() { // 카테고리 요청 상태 
+            if (serverController.isLoading.isTrue) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            return const SizedBox.shrink(); // 로딩 중이 아니면 아무것도 표시하지 않음
+          }),
           // 검색창을 지도 위에 겹침
           Positioned(
             top: 20,
