@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
+import 'package:sample_flutter_project/screens/add_new_place_page.dart';
 import 'package:sample_flutter_project/screens/login_page.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 import 'dart:io';

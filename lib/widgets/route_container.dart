@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
 
 import '../global_value_controller.dart';
+import '../screens/intro_page_view.dart';
 import 'calendar_widget.dart';
 
 class RouteContainer extends StatefulWidget{
@@ -11,8 +12,9 @@ class RouteContainer extends StatefulWidget{
     required this.place,
     this.startDate = "",
     this.endDate = "",
+    this.controller,
   });
-
+  final PageController? controller;
   final String place;
   final String startDate;
   final String endDate;
@@ -74,7 +76,12 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
                     child: ElevatedButton(
                       onPressed: () {
                         if(valueController.isFirstSelect.value && valueController.isSecondSelect.value){
-
+                          Get.back();
+                          valueController.updateIntroPageIndex(valueController.introPageIndex.value + 1);
+                          widget.controller!.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
                         }
                       },
                       child: Text("적용"),
@@ -91,7 +98,7 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
       onPressed: () {
         valueController.updateSelectedPlace(widget.place);
         widget.startDate != "" ?
-        Get.to(SafeArea(child: MyHomePage(title: 'demo'))):showCalendarBottomSheet();
+        Get.to(MyHomePage(title: 'demo')):showCalendarBottomSheet();
       },
       style: TextButton.styleFrom(
         fixedSize: Size(screenWidth * 0.88, 77),
@@ -115,7 +122,7 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
             ),
           ),
           Text(
-            "${widget.startDate}~${widget.startDate}",
+            "${widget.startDate}~${widget.endDate}",
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.grey,

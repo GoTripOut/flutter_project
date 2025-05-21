@@ -8,8 +8,10 @@ class RouteListBuilder extends StatefulWidget{
     super.key,
     required this.routeContent,
     required this.addNewRoute,
+    this.controller,
   });
-  final List<List<String>> routeContent;
+  final PageController? controller;
+  final List<dynamic> routeContent;
   final bool addNewRoute;
   @override
   createState() => _RouteListBuilderState();
@@ -27,8 +29,8 @@ class _RouteListBuilderState extends State<RouteListBuilder>{
         direction: Axis.vertical,
         children: widget.routeContent.map((content){
           return widget.addNewRoute
-              ? RouteContainer(place: content[0])
-              : RouteContainer(place: content[0], startDate: content[1], endDate: content[2]);
+              ? RouteContainer(place: content[0], controller: widget.controller,)
+              : RouteContainer(place: content[1], startDate: content[4], endDate: content[5], controller: widget.controller,);
         }).toList(),
       ),
     );
