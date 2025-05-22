@@ -11,6 +11,13 @@ class MarkerService {
   List<kakao.Route> myRoute = []; // 경로에 포함된 poi 리스트
   String selectedPoiId = "";
 
+  final List<Color> routeColor = [
+    Colors.grey.shade400,   // 회색
+    Colors.green.shade400,  // 초록색
+    Colors.amber.shade400,  // 겨자색
+    Colors.orange.shade400, // 주황색
+  ];
+
   MarkerService({
     required this.mapController,
     required this.pois,
@@ -23,11 +30,21 @@ class MarkerService {
     final shortestRoute = await RestApiService().findRoute(poiLat);
     if (shortestRoute == null) return;
 
+    if (myRoute.isNotEmpty) {
+      // 기존 경로를 삭제
+      for (var route in myRoute) {
+        await mapController.routeLayer.removeRoute(route);
+      }
+      myRoute.clear();
+    }
+
     final sections = shortestRoute["routes"][0]["sections"]; // 구간별 경로 정보
-    List<kakao.LatLng> polylines = []; // Route를 위한 좌표
+    int colorIndex = 0;
 
     for (var section in sections) {
       final roads = section["roads"]; // 도로 정보
+      List<kakao.LatLng> polylines = []; // 각 구간의 경로를 위한 좌표
+
       for (var road in roads) {
         final List<dynamic> vertices = road["vertexes"]; // x, y로 구성된 배열
         for (int i = 0; i < vertices.length; i += 2) {
@@ -57,23 +74,18 @@ class MarkerService {
           }
         }
       }
-    }
 
-    if (polylines.isNotEmpty) {
-      if (myRoute.isNotEmpty) {
-        // 기존 경로를 삭제
-        for (var route in myRoute) {
-          await mapController.routeLayer.removeRoute(route);
-        }
-        myRoute.clear();
+      if (polylines.isNotEmpty) {
+        Color myColor = routeColor[colorIndex % routeColor.length];
+        kakao.Route route = await mapController.routeLayer.addRoute(
+          polylines,
+          kakao.RouteStyle(myColor, 15),
+        );
+        myRoute.add(route);
+        colorIndex++;
+      } else {
+        print("경로를 표시할 수 없습니다");
       }
-      kakao.Route route = await mapController.routeLayer.addRoute(
-        polylines,
-        kakao.RouteStyle(Colors.blue, 15),
-      );
-      myRoute.add(route);
-    } else {
-      print("경로를 표시할 수 없습니다");
     }
   }
 
