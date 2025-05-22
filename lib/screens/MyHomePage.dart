@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
+import 'package:sample_flutter_project/global_value_controller.dart';
 import 'package:sample_flutter_project/marker_service.dart';
 import 'package:sample_flutter_project/position_service.dart';
 import 'package:sample_flutter_project/coordinate_service.dart';
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'category_place_page.dart';
-import 'package:sample_flutter_project/server_controller.dart';
 import 'package:get/get.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -28,6 +28,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final globalValueController = Get.find<GlobalValueController>();
   kakao.LatLng? myPosition;
   // 최근에 클릭한 위치를 저장하는 변수 recentPostion
   kakao.LatLng? recentPosition;
@@ -39,9 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   MarkerService? markerService;
   kakao.LatLng? tappedPosition; // 지도 클릭 시 좌표 저장
   final draggableSheetController = DraggableScrollableController();
-  String? tappedPlaceName; // poi 이름
 
-  List<kakao.LatLng> visitedPosition = []; // 방문했던 위치들을 저장하는 스택
   Map<String, String> categoryMap = {
     "음식점": "FD6",
     "카페": "CE7",
@@ -57,15 +56,10 @@ class _MyHomePageState extends State<MyHomePage> {
   // 캐시 : 가져왔던 장소 리스트를 새로 요청하지 않고 사용
   Map<String, List<dynamic>> cachedPlaceList = {};
 
-  // 위도, 경도 비교
-  bool _isSameLatLng(kakao.LatLng pos1, kakao.LatLng pos2) {
-    return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
-  }
-
   @override
   void initState() {
     super.initState();
-    _initializePosition();
+    _selectedPlacePosition();
     textController = TextEditingController();
   }
 
@@ -87,8 +81,17 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         myPosition = position;
         recentPosition = position;
-        visitedPosition.clear();
-        visitedPosition.add(position); // 초기 위치를 추가
+      });
+    }
+  }
+
+  void _selectedPlacePosition() async {
+    String query = globalValueController.selectedPlace.value;
+    kakao.LatLng? position = await RestApiService().getCoordinates(query);
+    if (position != null) {
+      setState(() {
+        myPosition = position;
+        recentPosition = position;
       });
     }
   }
@@ -100,27 +103,16 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     switch (index) {
       case 0:
-        kakao.LatLng targetPosition;
         if (tappedPosition != null) {
-          targetPosition = tappedPosition!;
-          if (visitedPosition.isEmpty ||
-              !_isSameLatLng(visitedPosition.last, targetPosition)) {
-            visitedPosition.add(targetPosition);
-          }
-        } else {
-          // 지도 위의 poi를 클릭하지 않을 경우, 검색한 위치를 기반으로 경로 추가
-          targetPosition = recentPosition!;
+          await markerService!.addRoute(tappedPosition!);
+          setState(() {
+            tappedPosition = null;
+          });
         }
-
-        setState(() {
-          recentPosition = targetPosition; // 새로운 위치로 업데이트
-        }); // UI 갱신
-
-        await markerService!.addRoute(targetPosition, tappedPlaceName);
-        setState(() {
-          tappedPosition = null;
-          tappedPlaceName = null;
-        });
+        else { // 지도 위의 poi를 클릭하지 않을 경우, 검색한 위치를 기반으로 경로 추가
+          await markerService!.addRoute(recentPosition!);
+          setState(() {}); // UI 갱신
+        }
         break;
       case 1:
         await markerService!.deleteRoute();
@@ -129,17 +121,14 @@ class _MyHomePageState extends State<MyHomePage> {
       case 2:
         await markerService!.resetRoute();
 
+        // 경로를 초기화하였으므로, 최근 위치를 현재 위치로 설정한다.
+        recentPosition = myPosition;
+
         // 경로를 초기화하였으므로, 다시 현재 위치로 카메라를 돌아오게 한다.
         mapController!.moveCamera(
           kakao.CameraUpdate.newCenterPosition(myPosition!),
         );
-        setState(() {
-          recentPosition = myPosition; // 최근 위치를 현재 위치로 설정
-          visitedPosition.clear();
-          visitedPosition.add(myPosition!);
-          tappedPlaceName = null;
-          tappedPosition = null;
-        }); // UI 갱신
+        setState(() {}); // UI 갱신
         break;
     }
   }
@@ -156,10 +145,6 @@ class _MyHomePageState extends State<MyHomePage> {
     kakao.LatLng? result = await RestApiService().getCoordinates(query);
     if (result != null) {
       setState(() {
-        if (visitedPosition.isNotEmpty &&
-            !_isSameLatLng(visitedPosition.last, recentPosition!)) {
-          visitedPosition.add(recentPosition!);
-        }
         recentPosition = result;
       });
       mapController!.moveCamera(
@@ -177,16 +162,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // 다이얼로그
-  Future<void> _showDialog(kakao.Poi poi) async {
-    final TextEditingController textController = TextEditingController(
-      text: poi.text,
-    );
+  Future <void> _showDialog(kakao.Poi poi) async {
+    final TextEditingController textController = TextEditingController(text: poi.text);
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text("장소 이름 변경"),
-          content: TextField(controller: textController),
+          content: TextField(
+            controller: textController,
+          ),
           actions: <Widget>[
             TextButton(
               child: Text('취소'),
@@ -212,93 +197,58 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // 카테고리 장소 리스트 화면으로 이동하고 결과를 처리
-  Future<void> _moveCategoryPlacePage(
-    String categoryName,
-    String placesJson,
-  ) async {
+  Future<void> _moveCategoryPlacePage(String categoryName, String placesJson) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => CategoryPlaceListPage(
-              categoryName: categoryName,
-              placesJson: placesJson,
-            ),
+        builder: (context) => CategoryPlaceListPage(
+          categoryName: categoryName,
+          placesJson: placesJson,
+        ),
       ),
     );
-
     if (result != null) {
-      final placeName = result['name'];
-      final placePosition = kakao.LatLng(
-        result['latitude'],
-        result['longitude'],
-      );
+      final placePosition = kakao.LatLng(result['latitude'], result['longitude']);
       mapController!.moveCamera(
         kakao.CameraUpdate.newCenterPosition(placePosition, zoomLevel: 16),
       );
-      setState(() {
-        if (visitedPosition.isEmpty ||
-            !_isSameLatLng(visitedPosition.last, placePosition)) {
-          visitedPosition.add(placePosition);
-        }
-        tappedPlaceName = placeName;
-        recentPosition = placePosition;
-      });
+      recentPosition = placePosition;
     }
   }
 
+  @override
   Widget build(BuildContext context) {
-    final serverController = Get.find<ServerController>();
     return Scaffold(
       body: Stack(
         children: [
-          myPosition != null
-              ? kakao.KakaoMap(
-                option: kakao.KakaoMapOption(
-                  position: kakao.LatLng(
-                    myPosition!.latitude,
-                    myPosition!.longitude,
-                  ),
-                ),
-                onMapReady: (kakao.KakaoMapController controller) {
-                  mapController = controller;
-                  markerService = MarkerService(
-                    mapController: mapController!,
-                    pois: [],
-                    poiLat: [],
-                    myRoute: [],
-                  );
-                  print("카카오 지도가 정상적으로 불러와졌습니다.");
-                },
-                onMapClick: (kakao.KPoint point, kakao.LatLng position) {
-                  setState(() {
-                    tappedPosition = position;
-                    tappedPlaceName = null;
-                  });
-                },
-                onPoiClick: (kakao.LabelController controller, kakao.Poi poi) {
-                  labelController = controller;
-                  markerService?.selectedPoiId = poi.id;
-                  setState(() {
-                    tappedPlaceName = null;
-                  });
-                  print("poi clicked");
-                },
-              )
-              : const Center(child: CircularProgressIndicator()),
-          Obx(() { // 카테고리 요청 상태 
-            if (serverController.isLoading.isTrue) {
-              return Center(
-                child: CircularProgressIndicator(),
+          myPosition != null ? kakao.KakaoMap(
+            option: kakao.KakaoMapOption(
+              position: kakao.LatLng(myPosition!.latitude, myPosition!.longitude),
+            ),
+            onMapReady: (kakao.KakaoMapController controller) {
+              mapController = controller;
+              markerService = MarkerService(
+                mapController: mapController!,
+                pois: [],
+                poiLat: [],
+                myRoute: [],
               );
-            }
-            return const SizedBox.shrink(); // 로딩 중이 아니면 아무것도 표시하지 않음
-          }),
+              print("카카오 지도가 정상적으로 불러와졌습니다.");
+            },
+            onMapClick: (kakao.KPoint point, kakao.LatLng position) {
+              setState(() {
+                tappedPosition = position;
+              });
+            },
+            onPoiClick: (kakao.LabelController controller, kakao.Poi poi) {
+              labelController = controller;
+              markerService?.selectedPoiId = poi.id;
+              print("poi clicked");
+            },
+          ) : const Center(child: CircularProgressIndicator()),
           // 검색창을 지도 위에 겹침
           Positioned(
-            top: 20,
-            left: 10,
-            right: 10,
+            top: 30, left: 10, right: 10,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -309,14 +259,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   Expanded(
                     child: TextField(
                       controller: textController,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "지역을 입력하세요",
-                        contentPadding: EdgeInsets.all(10),
-                        hintStyle: TextStyle(fontSize: 13),
+                      decoration: InputDecoration(border: InputBorder.none,
+                          hintText: "지역을 입력하세요",
+                          contentPadding: EdgeInsets.all(10),
+                          hintStyle: TextStyle(fontSize: 13)
                       ),
-                      onSubmitted: (value) {
-                        // 키보드의 입력을 완료했을 때
+                      onSubmitted: (value) { // 키보드의 입력을 완료했을 때
                         if (!mapLoading) {
                           _searchPosition();
                         }
@@ -324,162 +272,97 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   IconButton(
-                    onPressed: mapLoading ? null : _searchPosition,
-                    // 검색 버튼을 눌렀을 때
-                    icon:
-                        mapLoading
-                            ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : Icon(Icons.search),
+                      onPressed: mapLoading ? null : _searchPosition, // 검색 버튼을 눌렀을 때
+                      icon: mapLoading ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ): Icon(Icons.search)
                   ),
                 ],
               ),
             ),
           ),
           Positioned(
-            top: 70, // 검색창 아래에 배치
+            top: 80, // 검색창 아래에 배치
             left: 10,
             right: 10,
-            child: SingleChildScrollView(
-              // 화면 크기를 초과할 경우 스크롤 기능
+            child: SingleChildScrollView( // 화면 크기를 초과할 경우 스크롤 기능
               scrollDirection: Axis.horizontal,
               child: Row(
-                children:
-                    categoryMap.keys.map((categoryName) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            // 요청이 진행 중이면 새로 요청 x
-                            if (serverController.isLoading.isTrue) {
-                              print("요청이 진행 중입니다");
-                              return;
-                            }
+                children: categoryMap.keys.map((categoryName) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // 해당 카테고리의 장소 리스트를 검색
+                        // 요청이 진행 중이면 새로 요청 x
+                        if (globalValueController.isLoading.isTrue) {
+                          print("요청이 진행 중입니다");
+                          return;
+                        }
 
-                            final currentLat = recentPosition!.latitude
-                                .toStringAsFixed(6); // 소수점 6자리까지
-                            final currentLon = recentPosition!.longitude
-                                .toStringAsFixed(6); // 소수점 6자리까지
-                            final cacheKey =
-                                '$categoryName-$currentLat-$currentLon';
+                        // 이미 한 번 요청되었으면 캐시된 것을 사용
+                        if (cachedPlaceList.containsKey(categoryName)) {
+                          print("이미 요청된 카테고리입니다");
+                          _moveCategoryPlacePage(categoryName, jsonEncode(cachedPlaceList[categoryName]));
+                          return;
+                        }
 
-                            // 이미 한 번 요청되었으면 캐시된 것을 사용
-                            if (cachedPlaceList.containsKey(cacheKey)) {
-                              print("이미 요청된 카테고리입니다");
-                              _moveCategoryPlacePage(
-                                categoryName,
-                                jsonEncode(cachedPlaceList[cacheKey]),
-                              );
-                              return;
-                            }
-
-                            serverController.isLoading.value = true; // 요청 시작
-                            try {
-                              final String? categoryCode =
-                                  categoryMap[categoryName];
-                              final response = await sendRequest(
-                                'getPlaceList',
-                                placeInfo: [
-                                  categoryCode!,
-                                  recentPosition!.longitude.toString(),
-                                  recentPosition!.latitude.toString(),
-                                ],
-                              );
-                              if (response.isNotEmpty) {
-                                cachedPlaceList[cacheKey] = jsonDecode(
-                                  response,
-                                );
-                                _moveCategoryPlacePage(categoryName, response);
-                              }
-                            } catch (e) {
-                              print("장소 요청 실패");
-                            } finally {
-                              serverController.isLoading.value = false; // 요청 완료
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                          ),
-                          child: Text(
-                            categoryName,
-                            style: TextStyle(fontSize: 12.0),
-                          ),
+                        globalValueController.isLoading.value = true; // 요청 시작
+                        try {
+                          final String? categoryCode = categoryMap[categoryName];
+                          final response = await sendRequest(
+                            'getPlaceList',
+                            placeInfo: [categoryCode!,
+                            myPosition!.longitude.toString(),
+                            myPosition!.latitude.toString()],
+                          );
+                          if (response.isNotEmpty) {
+                            cachedPlaceList[categoryName] = jsonDecode(response);
+                            _moveCategoryPlacePage(categoryName, response);
+                          }
+                        } catch (e) {
+                          print("장소 요청 실패");
+                        } finally {
+                          globalValueController.isLoading.value = false; // 요청 완료
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      );
-                    }).toList(),
+                        padding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      child: Text(
+                          categoryName,
+                          style: TextStyle(fontSize: 12.0)),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
-          Positioned(
-            // 처음 위치로 돌아오는 버튼
+          Positioned( // 현재 위치로 돌아오는 버튼
             width: 40,
             height: 40,
-            bottom: 80.0,
-            // 모달 시트의 초기 높이 + 약간의 여백을 고려
+            bottom: 80.0, // 모달 시트의 초기 높이 + 약간의 여백을 고려
             right: 16.0,
-            child: FloatingActionButton(
-              heroTag: 'myLocation',
-              onPressed: () {
-                if (myPosition != null) {
-                  mapController!.moveCamera(
-                    kakao.CameraUpdate.newCenterPosition(myPosition!),
-                  );
-                }
-                setState(() {
-                  recentPosition = myPosition;
-                  visitedPosition.clear();
-                  visitedPosition.add(myPosition!);
-                  tappedPosition = null;
-                  tappedPlaceName = null;
-                });
-              },
-              child: const Icon(Icons.my_location),
-              backgroundColor: Colors.white,
-            ),
+            child: FloatingActionButton(onPressed: () {
+              if (myPosition != null) {
+                _initializePosition();
+                mapController!.moveCamera(
+                  kakao.CameraUpdate.newCenterPosition(myPosition!),
+                );
+              }
+            },
+            child: const Icon(Icons.my_location),
+            )
           ),
-          Positioned(
-            // 이전 장소로 돌아오는 버튼 (왼쪽 아래)
-            width: 40,
-            height: 40,
-            bottom: 80.0,
-            left: 16.0,
-            child: FloatingActionButton(
-              heroTag: 'back',
-              child: const Icon(Icons.arrow_back),
-              backgroundColor: Colors.white,
-              onPressed: () {
-                setState(() {
-                  if (visitedPosition.length > 1) {
-                    visitedPosition.removeLast(); // 현재 위치를 스택에서 제거
-                    recentPosition =
-                        visitedPosition.last; // 스택의 마지막 (이전 위치)로 업데이트
-                    mapController!.moveCamera(
-                      kakao.CameraUpdate.newCenterPosition(recentPosition!),
-                    );
-                    tappedPosition = null; // 뒤로 갈 때는 클릭 위치 초기화
-                    tappedPlaceName = null; // 뒤로 갈 때는 클릭 이름 초기화
-                  } else {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text("초기 위치입니다")));
-                  }
-                });
-              },
-            ),
-          ),
-          DraggableScrollableSheet(
-            // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
+          DraggableScrollableSheet( // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
             initialChildSize: 0.1,
             minChildSize: 0.1,
             maxChildSize: 0.8,
@@ -493,43 +376,42 @@ class _MyHomePageState extends State<MyHomePage> {
                     topRight: Radius.circular(30),
                   ),
                 ),
-                child:
-                    (markerService != null && markerService!.pois.isNotEmpty)
-                        ? ReorderableListView.builder(
-                          onReorder: (oldIndex, newIndex) {
-                            setState(() {
-                              if (oldIndex < newIndex) {
-                                newIndex -= 1;
-                              }
-                              markerService!.reorderList(oldIndex, newIndex);
-                            });
-                          },
-                          scrollController: scrollController,
-                          itemCount: markerService!.pois.length,
-                          itemBuilder: (context, index) {
-                            final poi = markerService!.pois[index];
-                            return ListTile(
-                              key: ValueKey(poi.id),
-                              title: Text(poi.text!),
-                              trailing: IconButton(
-                                onPressed: () async {
-                                  // deleteList 호출
-                                  await markerService!.deleteList(poi.id);
-                                  setState(() {});
-                                  // 경로 리스트가 비어있으면, 하단 시트의 최소 크기를 0.1로 설정
-                                  if (markerService!.pois.isEmpty) {
-                                    draggableSheetController.jumpTo(0.1);
-                                  }
-                                },
-                                icon: Icon(Icons.close),
-                              ),
-                              onTap: () {
-                                _showDialog(poi); // 다이얼로그 표시
-                              },
-                            );
-                          },
-                        )
-                        : Center(child: Text("경로 리스트가 비어있습니다")),
+                child: (markerService != null && markerService!.pois.isNotEmpty)?
+                ReorderableListView.builder(
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      if (oldIndex < newIndex) {
+                        newIndex -= 1;
+                      }
+                      markerService!.reorderList(oldIndex, newIndex);
+                    });
+                  },
+                  scrollController: scrollController,
+                  itemCount: markerService!.pois.length,
+                  itemBuilder: (context, index) {
+                    final poi = markerService!.pois[index];
+                    return ListTile(
+                      key: ValueKey(poi.id),
+                      title: Text(poi.text!),
+                      trailing: IconButton(
+                        onPressed: () async { // deleteList 호출
+                          await markerService!.deleteList(poi.id);
+                          setState(() {});
+                          // 경로 리스트가 비어있으면, 하단 시트의 최소 크기를 0.1로 설정
+                          if (markerService!.pois.isEmpty) {
+                            draggableSheetController.jumpTo(0.1);
+                          }
+                        },
+                        icon: Icon(Icons.close),
+                      ),
+                      onTap: () {
+                        _showDialog(poi); // 다이얼로그 표시
+                      },
+                    );
+                  },
+                ) : Center(
+                  child : Text("경로 리스트가 비어있습니다"),
+                ),
               );
             },
           ),
@@ -541,14 +423,11 @@ class _MyHomePageState extends State<MyHomePage> {
         currentIndex: selectedIndex,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_location_alt),
-            label: "경로 추가",
-          ),
+              icon: Icon(Icons.add_location_alt), label: "경로 추가"),
           BottomNavigationBarItem(
-            icon: Icon(Icons.delete_forever),
-            label: "경로 삭제",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.refresh), label: "경로 초기화"),
+              icon: Icon(Icons.delete_forever), label: "경로 삭제"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.refresh), label: "경로 초기화"),
         ],
       ),
     );
