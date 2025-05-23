@@ -8,6 +8,7 @@ import 'package:sample_flutter_project/coordinate_service.dart';
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'category_place_page.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -63,12 +64,64 @@ class _MyHomePageState extends State<MyHomePage> {
     return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
   }
 
+  void _updateDate() {
+    final startDateString = globalValueController.startDate.value;
+    final endDateString = globalValueController.endDate.value;
+
+    // 직접 날짜 문자열을 파싱
+    DateTime? startDate;
+    DateTime? endDate;
+
+    try {
+      // startDateString (예: "2025-6-20")을 '-' 기준으로 분리
+      List<String> startParts = startDateString.split('-');
+      if (startParts.length == 3) {
+        startDate = DateTime(
+          int.parse(startParts[0]), // 연도
+          int.parse(startParts[1]), // 월
+          int.parse(startParts[2]), // 일
+        );
+      }
+    } catch (e) {
+      print("시작 날짜 문자열 파싱 중 오류 발생: $e");
+    }
+
+    try {
+      // endDateString (예: "2025-6-21")을 '-' 기준으로 분리
+      List<String> endParts = endDateString.split('-');
+      if (endParts.length == 3) {
+        endDate = DateTime(
+          int.parse(endParts[0]), // 연도
+          int.parse(endParts[1]), // 월
+          int.parse(endParts[2]), // 일
+        );
+      }
+    } catch (e) {
+      print("종료 날짜 문자열 파싱 중 오류 발생: $e");
+    }
+  }
+
+  void _selectedPlacePosition() async {
+    String query = globalValueController.selectedPlace.value;
+    // 선택된 여행지의 좌표
+    kakao.LatLng? position = await RestApiService().getCoordinates(query);
+    if (position != null) {
+      setState(() {
+        myPosition = position;
+        recentPosition = position;
+        visitedPosition.clear();
+        visitedPosition.add(position);
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     //_initializePosition();
     _selectedPlacePosition();
     textController = TextEditingController();
+    _updateDate();
   }
 
   @override
@@ -91,20 +144,6 @@ class _MyHomePageState extends State<MyHomePage> {
         recentPosition = position;
         visitedPosition.clear();
         visitedPosition.add(position); // 초기 위치를 추가
-      });
-    }
-  }
-
-  void _selectedPlacePosition() async {
-    String query = globalValueController.selectedPlace.value;
-    // 선택된 여행지의 좌표
-    kakao.LatLng? position = await RestApiService().getCoordinates(query);
-    if (position != null) {
-      setState(() {
-        myPosition = position;
-        recentPosition = position;
-        visitedPosition.clear();
-        visitedPosition.add(position);
       });
     }
   }
