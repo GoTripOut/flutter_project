@@ -25,7 +25,6 @@ class _RouteListBuilderState extends State<RouteListBuilder>{
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Wrap(
-        spacing: 10,
         direction: Axis.vertical,
         children: widget.routeContent.map((content){
           return widget.addNewRoute

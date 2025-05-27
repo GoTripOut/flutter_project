@@ -1,5 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+
+import 'widgets/day.dart';
 
 class GlobalValueController extends GetxController{
   var serverUrl = "".obs;
@@ -10,22 +11,20 @@ class GlobalValueController extends GetxController{
   var selectedPlace = "".obs;
   var isFirstSelect = false.obs;
   var isSecondSelect = false.obs;
-  var firstSelectedDate = {
-    "year": 0,
-    "month": 0,
-    "day":0,
-    "isInMonth": false,
-    "isNextDay": false,
-  }.obs;
-  var secondSelectedDate = {
-    "year": 0,
-    "month": 0,
-    "day":0,
-    "isInMonth": false,
-    "isNextDay": false,
-  }.obs;
-  var startDate = "".obs;
-  var endDate = "".obs;
+  var firstSelectedDate = Day(
+    day: DateTime(0),
+    isInMonth: false,
+    isVisible: false,
+    isInRange: false,
+    isSelected: false,
+  ).obs;
+  var secondSelectedDate = Day(
+    day: DateTime(0),
+    isInMonth: false,
+    isVisible: false,
+    isInRange: false,
+    isSelected: false,
+  ).obs;
   var validWeeks = <bool>[false, false, false, false, false, false].obs;
 
   void updateServerUrl(String url){
@@ -48,17 +47,32 @@ class GlobalValueController extends GetxController{
     update();
   }
 
-  void updateFirstSelected(bool first, var firstDate){
-    isFirstSelect.value = first;
+  void updateFirstSelected(Day firstDate){
     firstSelectedDate.value = firstDate;
-    startDate.value = "${firstDate["year"]}-${firstDate["month"]}-${firstDate["day"]}";
+    isFirstSelect.value = true;
     update();
   }
 
-  void updateSecondSelected(bool second, var secondDate){
-    isSecondSelect.value = second;
+  void updateSecondSelected(Day secondDate){
     secondSelectedDate.value = secondDate;
-    endDate.value = "${secondDate["year"]}-${secondDate["month"]}-${secondDate["day"]}";
+    isSecondSelect.value = true;
+    update();
+  }
+
+  void initFirstSelected(){
+    isFirstSelect.value = false;
+    update();
+  }
+
+  void initSecondSelected(){
+    isSecondSelect.value = false;
+    secondSelectedDate.value = Day(
+      day: DateTime(0),
+      isInMonth: false,
+      isVisible: false,
+      isInRange: false,
+      isSelected: false,
+    );
     update();
   }
 

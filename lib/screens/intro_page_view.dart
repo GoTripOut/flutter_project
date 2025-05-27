@@ -6,8 +6,7 @@ import 'package:sample_flutter_project/screens/MyHomePage.dart';
 import 'package:sample_flutter_project/screens/add_new_place_page.dart';
 import 'package:sample_flutter_project/screens/favorite_selection_page_1.dart';
 import 'package:sample_flutter_project/screens/favorite_selection_page_3.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:intl/intl.dart';
 import 'favorite_selection_page_2.dart';
 
 class IntroPageView extends StatefulWidget{
@@ -82,7 +81,9 @@ class _IntroPageViewState extends State<IntroPageView>{
               int pageIndex = valueController.introPageIndex.value;
               valueController.updateIntroPageIndex(++pageIndex);
               if(pageIndex == 3){
-                sendRequest('insert_new_place', newPlace: [valueController.selectedPlace.value, valueController.startDate.value, valueController.endDate.value], userID: valueController.userID.value);
+                DateTime startDate = valueController.firstSelectedDate.value.day;
+                DateTime endDate = valueController.secondSelectedDate.value.day;
+                sendRequest('insert_new_place', newPlace: [valueController.selectedPlace.value, DateFormat('yyyy-MM-dd').format(startDate), DateFormat('yyyy-MM-dd').format(endDate)], userID: valueController.userID.value);
               }
               _pageController.nextPage(
                 duration: const Duration(milliseconds: 300),

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sample_flutter_project/screens/add_new_place_page.dart';
 import 'package:get/get.dart';
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
@@ -59,7 +58,10 @@ class _MainPageState extends State<MainPage>{
         }
       },
       child: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
+          shadowColor: Colors.grey.withAlpha(128),
+          elevation: 2.0,
           title: isSearching ? TextField(
             onChanged: (value){
               filteredList = placeList
@@ -72,7 +74,7 @@ class _MainPageState extends State<MainPage>{
               border: InputBorder.none,
             ),
             style: TextStyle(color: Colors.black),
-          ) : Text("홈"),
+          ) : Text("나의 여행"),
           actions:[
             IconButton(
               icon: Icon(Icons.search),
@@ -81,7 +83,9 @@ class _MainPageState extends State<MainPage>{
                 setState((){});
               },
             ),
-          ]
+          ],
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
         ),
         body: FutureBuilder<String>(
           future: sendRequest('get_user_place', userID: userID),    // 1: index, 2: place_name, 3: created_time, 4: start_date, 5: end_date
@@ -90,18 +94,19 @@ class _MainPageState extends State<MainPage>{
               return Center(child: CircularProgressIndicator());
             }else if(snapshot.hasData){
               placeList = jsonDecode(snapshot.data!);
-              print(placeList);
               return Container(
-                width: screenWidth, // 동적 너비
-                height: screenHeight, // 동적 높이
+                width: screenWidth,
+                height: screenHeight,
+                margin: EdgeInsets.only(top: 10),
                 clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(color: const Color(0xFFF0F0F0)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                ),
                 child: Stack(
                   children: [
                     Positioned(
                       child: Center(
-                        child:Container(
-                            padding: EdgeInsets.only(top: 10),
+                        child:SizedBox(
                             width: screenWidth * 0.88,
                             height: screenHeight,
                             child: isSearching        //검색 중일 경우 검색한 내용만, 아닐 경우 모든 내용을 내림차순 출력

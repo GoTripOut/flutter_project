@@ -218,6 +218,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       body: Stack(
         children: [
@@ -247,6 +249,29 @@ class _MyHomePageState extends State<MyHomePage> {
             },
           ) : const Center(child: CircularProgressIndicator()),
           // 검색창을 지도 위에 겹침
+          Obx(() => globalValueController.isLoading.isTrue ? Container(
+            width: screenWidth,
+            height: screenHeight,
+            color: Colors.white.withAlpha(128),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 5,
+                children: [
+                  CircularProgressIndicator(),
+                  Text(
+                      "추천 장소 검색 중...",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                        decoration: TextDecoration.none,
+                      )
+                  ),
+                ],
+              )
+            )
+          ) : SizedBox.shrink()),
           Positioned(
             top: 30, left: 10, right: 10,
             child: Container(

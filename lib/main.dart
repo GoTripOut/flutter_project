@@ -4,22 +4,18 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
-import 'package:sample_flutter_project/screens/add_new_place_page.dart';
 import 'package:sample_flutter_project/screens/login_page.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 import 'dart:io';
 
 void listenFastAPIBroadCast() async {
-  print("get broadcast message");
   RawDatagramSocket socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 8888);
   socket.listen((RawSocketEvent event) async {
     if(event == RawSocketEvent.read){
-      print("read_broadcast_message");
       Datagram? datagram = socket.receive();
       if(datagram != null){
-        print("get_datagram");
+        print("getDatagram");
         String serverUrl = String.fromCharCodes(datagram.data).trim();
-        print(serverUrl);
         final response = await http.get(Uri.parse("${serverUrl}get_connect_state"));
         if(response.statusCode == 200) {
           print(response.body);
@@ -41,8 +37,9 @@ void main() async {
   }
 
   await kakao.KakaoMapSdk.instance.initialize(kakaoNativeAppKey);
-  Get.put(GlobalValueController());
   listenFastAPIBroadCast();
+  Get.put(GlobalValueController());
+
   runApp(const MyApp());
 }
 
@@ -72,13 +69,32 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: SafeArea(
+      home: Obx(() => SafeArea(
         top: false,
         left: false,
         right: false,
         bottom: true,
-        child: LoginPage(),
-      ),
+        child: Get.find<GlobalValueController>().serverUrl.value != "" ? LoginPage() : Container(
+          color: Colors.white,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 5,
+            children: [
+              CircularProgressIndicator(),
+              Text(
+                "서버 연결 중...",
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                  decoration: TextDecoration.none,
+                )
+              ),
+            ],
+          )
+        )
+      )
+      )
     );
   }
 }

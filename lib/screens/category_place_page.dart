@@ -25,9 +25,9 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
 
     placeList = jsonDecode(widget.placesJson);
     placeList.sort((a, b) { // AI_score별로 정렬
-      final score_a = a['AI_score'];
-      final score_b = b['AI_score'];
-      return score_b.compareTo(score_a);
+      final scoreA = a['AI_score'];
+      final scoreB = b['AI_score'];
+      return scoreB.compareTo(scoreA);
     });
   }
 
@@ -83,10 +83,10 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
             final double latitude = place['y'];
             final double longitude = place['x'];
             final status = place['status'];
-            final status_description = place['status_description'];
+            final statusDescription = place['status_description'];
             final visitorReviewScore = place['visitorReviewScore'];
             final visitorReviewCount = place['visitorReviewCount'];
-            final ai_score = place['AI_score'];
+            final aiScore = place['AI_score'];
 
             double rating = 0;
             if (visitorReviewScore != null) {
@@ -112,7 +112,7 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
                     const SizedBox(width: 3.0), // 별점과 점수 사이의 공간 추가
                       if (visitorReviewScore != null)
                       Text(
-                        '$visitorReviewScore (${visitorReviewCount != null ? "${visitorReviewCount}" : 0})',
+                        '$visitorReviewScore (${visitorReviewCount != null ? "$visitorReviewCount" : 0})',
                         style: const TextStyle(fontSize: 12.0),
                       ),
                     const Spacer(), // 아이콘을 오른쪽 끝으로
@@ -128,7 +128,7 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
                 ),
                 subtitle: Row(
                   children: [
-                      Text("AI Score : ${ai_score}점,   ", style: TextStyle(
+                      Text("AI Score : $aiScore점,   ", style: TextStyle(
                         fontSize: 11,),
                       ),
                     if (status != null)
@@ -141,9 +141,9 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
                       Text("영업 정보가 없습니다", style: TextStyle(
                           fontSize: 11)),
                     const SizedBox(width: 8.0),
-                    if (status_description != null)
+                    if (statusDescription != null)
                       Text(
-                        status_description,
+                        statusDescription,
                         style: const TextStyle(fontSize: 12.0),
                       ),
                   ],
