@@ -8,7 +8,6 @@ import 'package:sample_flutter_project/coordinate_service.dart';
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'category_place_page.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -59,6 +58,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // 캐시 : 가져왔던 장소 리스트를 새로 요청하지 않고 사용
   Map<String, List<dynamic>> cachedPlaceList = {};
 
+  List<DateTime> tripDates = []; // 여행 날짜 리스트
+  DateTime? selectedDate; // 현재 선택된 날짜
+
   // 위도, 경도 비교
   bool _isSameLatLng(kakao.LatLng pos1, kakao.LatLng pos2) {
     return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
@@ -99,11 +101,32 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (e) {
       print("종료 날짜 문자열 파싱 중 오류 발생: $e");
     }
+
+    if (startDate != null && endDate != null) {
+      tripDates.clear();
+      // 시작 날짜부터 종료 날짜까지 모든 날짜에 대해 생성
+      for (var d = startDate; d.isBefore(endDate.add(const Duration(days: 1)));
+      d = d.add(const Duration(days: 1))) {
+        final day = DateTime(d.year, d.month, d.day);
+        tripDates.add(day);
+      }
+      setState(() {
+        selectedDate = DateTime(startDate!.year, startDate!.month, startDate!.day,); // 초기 선택 날짜는 여행의 첫 날짜로 설정
+      });
+      print("여행의 첫 날짜는 ${selectedDate}");
+    }
   }
 
+  // 현재 보고있는 화면의 날짜를 설정
+  void _selectDate(DateTime date) async {
+    setState(() {
+      selectedDate = date;
+    });
+  }
+
+  // 선택된 여행지의 좌표
   void _selectedPlacePosition() async {
     String query = globalValueController.selectedPlace.value;
-    // 선택된 여행지의 좌표
     kakao.LatLng? position = await RestApiService().getCoordinates(query);
     if (position != null) {
       setState(() {
@@ -254,7 +277,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () async {
                 String newName = textController.text.trim();
                 if (newName.isNotEmpty) {
-                  await markerService!.renamePoi(poi, newName);
+                  await markerService!.renamePoi(poi, newName); // poi 이름 변경
                   setState(() {}); // UI 갱신
                 }
                 Navigator.pop(context);
@@ -274,8 +297,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => CategoryPlaceListPage(
+        builder: (context) => CategoryPlaceListPage(
           categoryName: categoryName,
           placesJson: placesJson,
         ),
@@ -322,6 +344,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 poiLat: [],
                 myRoute: [],
               );
+              _updateDate();
               print("카카오 지도가 정상적으로 불러와졌습니다.");
             },
             onMapClick: (kakao.KPoint point, kakao.LatLng position) {
@@ -380,8 +403,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   IconButton(
                     onPressed: mapLoading ? null : _searchPosition,
                     // 검색 버튼을 눌렀을 때
-                    icon:
-                    mapLoading
+                    icon: mapLoading
                         ? SizedBox(
                       width: 20,
                       height: 20,
@@ -401,8 +423,7 @@ class _MyHomePageState extends State<MyHomePage> {
               // 화면 크기를 초과할 경우 스크롤 기능
               scrollDirection: Axis.horizontal,
               child: Row(
-                children:
-                categoryMap.keys.map((categoryName) {
+                children: categoryMap.keys.map((categoryName) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: ElevatedButton(
@@ -417,8 +438,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             .toStringAsFixed(6); // 소수점 6자리까지
                         final currentLon = recentPosition!.longitude
                             .toStringAsFixed(6); // 소수점 6자리까지
-                        final cacheKey =
-                            '$categoryName-$currentLat-$currentLon';
+                        final cacheKey = '$categoryName-$currentLat-$currentLon';
 
                         // 이미 한 번 요청되었으면 캐시된 것을 사용
                         if (cachedPlaceList.containsKey(cacheKey)) {
@@ -432,8 +452,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                         globalValueController.isLoading.value = true; // 요청 시작
                         try {
-                          final String? categoryCode =
-                          categoryMap[categoryName];
+                          final String? categoryCode = categoryMap[categoryName];
                           final response = await sendRequest(
                             'getPlaceList',
                             placeInfo: [
@@ -479,8 +498,7 @@ class _MyHomePageState extends State<MyHomePage> {
             // 처음 위치로 돌아오는 버튼
             width: 40,
             height: 40,
-            bottom: 80.0,
-            // 모달 시트의 초기 높이 + 약간의 여백을 고려
+            bottom: 150.0,
             right: 16.0,
             child: FloatingActionButton(
               heroTag: 'myLocation',
@@ -506,7 +524,7 @@ class _MyHomePageState extends State<MyHomePage> {
             // 이전 장소로 돌아오는 버튼 (왼쪽 아래)
             width: 40,
             height: 40,
-            bottom: 80.0,
+            bottom: 150.0,
             left: 16.0,
             child: FloatingActionButton(
               heroTag: 'back',
@@ -524,9 +542,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     tappedPosition = null; // 뒤로 갈 때는 클릭 위치 초기화
                     tappedPlaceName = null; // 뒤로 갈 때는 클릭 이름 초기화
                   } else {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text("여행지 초기 위치입니다")));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("여행지 초기 위치입니다")),
+                    );
                   }
                 });
               },
@@ -534,9 +552,9 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           DraggableScrollableSheet(
             // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
-            initialChildSize: 0.1,
-            minChildSize: 0.1,
-            maxChildSize: 0.8,
+            initialChildSize: 0.2,
+            minChildSize: 0.2,
+            maxChildSize: 1.0,
             controller: draggableSheetController,
             builder: (BuildContext context, ScrollController scrollController) {
               return Container(
@@ -572,7 +590,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           setState(() {});
                           // 경로 리스트가 비어있으면, 하단 시트의 최소 크기를 0.1로 설정
                           if (markerService!.pois.isEmpty) {
-                            draggableSheetController.jumpTo(0.1);
+                            draggableSheetController.jumpTo(0.2);
                           }
                         },
                         icon: Icon(Icons.close),
