@@ -30,6 +30,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final globalValueController = Get.find<GlobalValueController>();
   kakao.LatLng? myPosition;
+
   // 최근에 클릭한 위치를 저장하는 변수 recentPostion
   kakao.LatLng? recentPosition;
   kakao.KakaoMapController? mapController;
@@ -58,6 +59,10 @@ class _MyHomePageState extends State<MyHomePage> {
   // 캐시 : 가져왔던 장소 리스트를 새로 요청하지 않고 사용
   Map<String, List<dynamic>> cachedPlaceList = {};
 
+  final PageController pageController = PageController(); // 날짜 PageView 컨트롤러
+  Map<DateTime, MarkerService> tripDatesMarkerServices =
+      {}; // 날짜별 MarkerService
+  MarkerService? currentMarkerService; // 현재 선택된 날짜의 MarkerService
   List<DateTime> tripDates = []; // 여행 날짜 리스트
   DateTime? selectedDate; // 현재 선택된 날짜
 
@@ -66,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
   }
 
-  void _updateDate() {
+  void _updateDate() async {
     final startDateString = globalValueController.startDate.value;
     final endDateString = globalValueController.endDate.value;
 
@@ -103,25 +108,56 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     if (startDate != null && endDate != null) {
-      tripDates.clear();
+      for (var markerservice in tripDatesMarkerServices.values) {
+        await markerservice.resetRoute(); // 각 서비스의 모든 데이터 초기화
+      }
+      tripDatesMarkerServices.clear();
+      tripDates.clear(); // 날짜 리스트 초기화
+
       // 시작 날짜부터 종료 날짜까지 모든 날짜에 대해 생성
       for (var d = startDate; d.isBefore(endDate.add(const Duration(days: 1)));
-      d = d.add(const Duration(days: 1))) {
+      d = d.add(const Duration(days: 1))
+      ) {
         final day = DateTime(d.year, d.month, d.day);
         tripDates.add(day);
+        tripDatesMarkerServices[day] = MarkerService(
+          mapController: mapController!,
+        );
       }
       setState(() {
-        selectedDate = DateTime(startDate!.year, startDate!.month, startDate!.day,); // 초기 선택 날짜는 여행의 첫 날짜로 설정
+        selectedDate = DateTime(
+          startDate!.year,
+          startDate!.month,
+          startDate!.day,
+        ); // 초기 선택 날짜는 여행의 첫 날짜로 설정
+        currentMarkerService = tripDatesMarkerServices[selectedDate]; // 현재 MarkerService 설정
+        if (pageController.hasClients) {
+          pageController.jumpToPage(0); // PageView를 첫 페이지로 이동
+        }
       });
       print("여행의 첫 날짜는 ${selectedDate}");
+      if (currentMarkerService != null) {
+        await currentMarkerService!.showFromMap();
+      }
     }
   }
 
   // 현재 보고있는 화면의 날짜를 설정
   void _selectDate(DateTime date) async {
+    // 1. 현재 보여지고 있는 날짜의 MarkerService 요소를 지도에서 숨김
+    if (currentMarkerService != null && selectedDate != null) {
+      await currentMarkerService!.hideFromMap();
+    }
+
     setState(() {
-      selectedDate = date;
+      selectedDate = date; // 선택된 날짜 업데이트
+      currentMarkerService = tripDatesMarkerServices[selectedDate]; // 새 날짜에 해당하는 MarkerService 활성화
     });
+
+    // 2. 새롭게 선택된 날짜의 MarkerService 요소를 지도에 표시
+    if (currentMarkerService != null) {
+      await currentMarkerService!.showFromMap();
+    }
   }
 
   // 선택된 여행지의 좌표
@@ -135,6 +171,9 @@ class _MyHomePageState extends State<MyHomePage> {
         visitedPosition.clear();
         visitedPosition.add(position);
       });
+      if (mapController != null && selectedDate != null && currentMarkerService == null) {
+        currentMarkerService = tripDatesMarkerServices[selectedDate];
+      }
     }
   }
 
@@ -151,6 +190,10 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     textController.dispose();
     draggableSheetController.dispose();
+    pageController.dispose();
+    tripDatesMarkerServices.values.forEach((service) async {
+      await service.resetRoute(); // 각 서비스의 데이터 초기화
+    });
     super.dispose();
   }
 
@@ -176,6 +219,15 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       selectedIndex = index;
     });
+
+    // 현재 선택된 날짜의 MarkerService가 없으면 동작하지 않음
+    if (currentMarkerService == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("날짜를 먼저 선택해주세요.")));
+      return;
+    }
+
     switch (index) {
       case 0:
         kakao.LatLng targetPosition;
@@ -194,18 +246,18 @@ class _MyHomePageState extends State<MyHomePage> {
           recentPosition = targetPosition; // 새로운 위치로 업데이트
         }); // UI 갱신
 
-        await markerService!.addRoute(targetPosition, tappedPlaceName);
+        await currentMarkerService!.addRoute(targetPosition, tappedPlaceName);
         setState(() {
           tappedPosition = null;
           tappedPlaceName = null;
         });
         break;
       case 1:
-        await markerService!.deleteRoute();
+        await currentMarkerService!.deleteRoute();
         setState(() {});
         break;
       case 2:
-        await markerService!.resetRoute();
+        await currentMarkerService!.resetRoute();
 
         // 경로를 초기화하였으므로, 다시 현재 위치로 카메라를 돌아오게 한다.
         mapController!.moveCamera(
@@ -263,6 +315,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text("장소 이름 변경"),
           content: TextField(controller: textController),
           actions: <Widget>[
@@ -291,16 +344,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 카테고리 장소 리스트 화면으로 이동하고 결과를 처리
   Future<void> _moveCategoryPlacePage(
-      String categoryName,
-      String placesJson,
-      ) async {
+    String categoryName,
+    String placesJson,
+  ) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CategoryPlaceListPage(
-          categoryName: categoryName,
-          placesJson: placesJson,
-        ),
+        builder:
+            (context) => CategoryPlaceListPage(
+              categoryName: categoryName,
+              placesJson: placesJson,
+            ),
       ),
     );
 
@@ -330,44 +384,38 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           myPosition != null
               ? kakao.KakaoMap(
-            option: kakao.KakaoMapOption(
-              position: kakao.LatLng(
-                myPosition!.latitude,
-                myPosition!.longitude,
-              ),
-            ),
-            onMapReady: (kakao.KakaoMapController controller) {
-              mapController = controller;
-              markerService = MarkerService(
-                mapController: mapController!,
-                pois: [],
-                poiLat: [],
-                myRoute: [],
-              );
-              _updateDate();
-              print("카카오 지도가 정상적으로 불러와졌습니다.");
-            },
-            onMapClick: (kakao.KPoint point, kakao.LatLng position) {
-              setState(() {
-                tappedPosition = position;
-                tappedPlaceName = null;
-              });
-            },
-            onPoiClick: (kakao.LabelController controller, kakao.Poi poi) {
-              labelController = controller;
-              markerService?.selectedPoiId = poi.id;
-              setState(() {
-                tappedPlaceName = null;
-              });
-              print("poi clicked");
-            },
-          )
+                option: kakao.KakaoMapOption(
+                  position: kakao.LatLng(
+                    myPosition!.latitude,
+                    myPosition!.longitude,
+                  ),
+                ),
+                onMapReady: (kakao.KakaoMapController controller) {
+                  mapController = controller;
+                  markerService = MarkerService(mapController: mapController!);
+                  _updateDate();
+                  print("카카오 지도가 정상적으로 불러와졌습니다.");
+                },
+                onMapClick: (kakao.KPoint point, kakao.LatLng position) {
+                  setState(() {
+                    tappedPosition = position;
+                    tappedPlaceName = null;
+                  });
+                },
+                onPoiClick: (kakao.LabelController controller, kakao.Poi poi) {
+                  labelController = controller;
+                  currentMarkerService?.selectedPoiId = poi.id;
+                  setState(() {
+                    tappedPlaceName = null;
+                  });
+                  print("poi clicked");
+                },
+              )
               : const Center(child: CircularProgressIndicator()),
-          Obx(() { // 카테고리 요청 상태
+          Obx(() {
+            // 카테고리 요청 상태
             if (globalValueController.isLoading.isTrue) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
+              return Center(child: CircularProgressIndicator());
             }
             return const SizedBox.shrink(); // 로딩 중이 아니면 아무것도 표시하지 않음
           }),
@@ -403,94 +451,100 @@ class _MyHomePageState extends State<MyHomePage> {
                   IconButton(
                     onPressed: mapLoading ? null : _searchPosition,
                     // 검색 버튼을 눌렀을 때
-                    icon: mapLoading
-                        ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                        : Icon(Icons.search),
+                    icon:
+                        mapLoading ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : Icon(Icons.search),
                   ),
                 ],
               ),
             ),
           ),
           Positioned(
-            top: 70, // 검색창 아래에 배치
+            // 카테고리 버튼, 검색창 아래에 배치
+            top: 70,
             left: 10,
             right: 10,
             child: SingleChildScrollView(
               // 화면 크기를 초과할 경우 스크롤 기능
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: categoryMap.keys.map((categoryName) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        // 요청이 진행 중이면 새로 요청 x
-                        if (globalValueController.isLoading.isTrue) {
-                          print("요청이 진행 중입니다");
-                          return;
-                        }
+                children:
+                    categoryMap.keys.map((categoryName) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            // 요청이 진행 중이면 새로 요청 x
+                            if (globalValueController.isLoading.isTrue) {
+                              print("요청이 진행 중입니다");
+                              return;
+                            }
 
-                        final currentLat = recentPosition!.latitude
-                            .toStringAsFixed(6); // 소수점 6자리까지
-                        final currentLon = recentPosition!.longitude
-                            .toStringAsFixed(6); // 소수점 6자리까지
-                        final cacheKey = '$categoryName-$currentLat-$currentLon';
+                            final currentLat = recentPosition!.latitude
+                                .toStringAsFixed(6); // 소수점 6자리까지
+                            final currentLon = recentPosition!.longitude
+                                .toStringAsFixed(6); // 소수점 6자리까지
+                            final cacheKey =
+                                '$categoryName-$currentLat-$currentLon';
 
-                        // 이미 한 번 요청되었으면 캐시된 것을 사용
-                        if (cachedPlaceList.containsKey(cacheKey)) {
-                          print("이미 요청된 카테고리입니다");
-                          _moveCategoryPlacePage(
+                            // 이미 한 번 요청되었으면 캐시된 것을 사용
+                            if (cachedPlaceList.containsKey(cacheKey)) {
+                              print("이미 요청된 카테고리입니다");
+                              _moveCategoryPlacePage(
+                                categoryName,
+                                jsonEncode(cachedPlaceList[cacheKey]),
+                              );
+                              return;
+                            }
+
+                            globalValueController.isLoading.value =
+                                true; // 요청 시작
+                            try {
+                              final String? categoryCode =
+                                  categoryMap[categoryName];
+                              final response = await sendRequest(
+                                'getPlaceList',
+                                placeInfo: [
+                                  categoryCode!,
+                                  recentPosition!.longitude.toString(),
+                                  recentPosition!.latitude.toString(),
+                                ],
+                              );
+                              if (response.isNotEmpty) {
+                                cachedPlaceList[cacheKey] = jsonDecode(
+                                  response,
+                                );
+                                _moveCategoryPlacePage(categoryName, response);
+                              }
+                            } catch (e) {
+                              print("장소 요청 실패");
+                            } finally {
+                              globalValueController.isLoading.value =
+                                  false; // 요청 완료
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                          ),
+                          child: Text(
                             categoryName,
-                            jsonEncode(cachedPlaceList[cacheKey]),
-                          );
-                          return;
-                        }
-
-                        globalValueController.isLoading.value = true; // 요청 시작
-                        try {
-                          final String? categoryCode = categoryMap[categoryName];
-                          final response = await sendRequest(
-                            'getPlaceList',
-                            placeInfo: [
-                              categoryCode!,
-                              recentPosition!.longitude.toString(),
-                              recentPosition!.latitude.toString(),
-                            ],
-                          );
-                          if (response.isNotEmpty) {
-                            cachedPlaceList[cacheKey] = jsonDecode(
-                              response,
-                            );
-                            _moveCategoryPlacePage(categoryName, response);
-                          }
-                        } catch (e) {
-                          print("장소 요청 실패");
-                        } finally {
-                          globalValueController.isLoading.value = false; // 요청 완료
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                            style: TextStyle(fontSize: 12.0),
+                          ),
                         ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                      child: Text(
-                        categoryName,
-                        style: TextStyle(fontSize: 12.0),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
               ),
             ),
           ),
@@ -554,54 +608,142 @@ class _MyHomePageState extends State<MyHomePage> {
             // Poi 리스트를 보여주고 스크롤되는 하단 모달 시트
             initialChildSize: 0.2,
             minChildSize: 0.2,
-            maxChildSize: 1.0,
+            maxChildSize: 0.9,
             controller: draggableSheetController,
             builder: (BuildContext context, ScrollController scrollController) {
+              // 현재 선택된 날짜의 MarkerService
+              final currentDayMarkerService = currentMarkerService;
               return Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
+                    topLeft: Radius.circular(50),
+                    topRight: Radius.circular(50),
                   ),
                 ),
-                child:
-                (markerService != null && markerService!.pois.isNotEmpty)
-                    ? ReorderableListView.builder(
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (oldIndex < newIndex) {
-                        newIndex -= 1;
-                      }
-                      markerService!.reorderList(oldIndex, newIndex);
-                    });
-                  },
-                  scrollController: scrollController,
-                  itemCount: markerService!.pois.length,
-                  itemBuilder: (context, index) {
-                    final poi = markerService!.pois[index];
-                    return ListTile(
-                      key: ValueKey(poi.id),
-                      title: Text(poi.text!),
-                      trailing: IconButton(
-                        onPressed: () async {
-                          // deleteList 호출
-                          await markerService!.deleteList(poi.id);
-                          setState(() {});
-                          // 경로 리스트가 비어있으면, 하단 시트의 최소 크기를 0.1로 설정
-                          if (markerService!.pois.isEmpty) {
-                            draggableSheetController.jumpTo(0.2);
-                          }
-                        },
-                        icon: Icon(Icons.close),
+                child: Column(
+                  children: [
+                    // 날짜 선택 PageView
+                    if (tripDates.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8.0,
+                          horizontal: 10.0,
+                        ),
+                        child: SizedBox(
+                          height: 30,
+                          child: Row( // Row 위젯 추가
+                            children: [
+                              // 왼쪽 화살표 버튼
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back_ios),
+                                iconSize: 15,
+                                onPressed: () {
+                                  if (pageController.hasClients && pageController.page! > 0) {
+                                    pageController.previousPage(
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeOut,
+                                    );
+                                  }
+                                },
+                              ),
+                              Expanded( // PageView가 남은 공간을 차지하도록 Expanded 추가
+                                child: PageView.builder(
+                                  controller: pageController,
+                                  itemCount: tripDates.length,
+                                  onPageChanged: (index) {
+                                    _selectDate(tripDates[index]); // 페이지 변경 시 날짜 선택
+                                  },
+                                  itemBuilder: (context, index) {
+                                    final date = tripDates[index];
+                                    return Center(
+                                      child: Text(
+                                        "${date.month}월 ${date.day}일",
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                          color:
+                                          selectedDate == date ? Colors.blue : Colors.black,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              // 오른쪽 화살표 버튼
+                              IconButton(
+                                icon: const Icon(Icons.arrow_forward_ios),
+                                iconSize: 15, // 아이콘 크기 조절
+                                onPressed: () {
+                                  if (pageController.hasClients && pageController.page! < tripDates.length - 1) {
+                                    pageController.nextPage(
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeOut,
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      onTap: () {
-                        _showDialog(poi); // 다이얼로그 표시
-                      },
-                    );
-                  },
-                )
-                    : Center(child: Text("경로 리스트가 비어있습니다")),
+                    Divider( // 구분선
+                      height: 5,
+                      thickness: 1, // 구분선의 실제 두께
+                      indent: 15, // 왼쪽 여백
+                      endIndent: 15, // 오른쪽 여백
+                      color: Colors.grey.shade400,
+                    ),
+                    // POI 목록 (ReorderableListView)
+                    Expanded(
+                      child:
+                          (currentDayMarkerService != null &&
+                                  currentDayMarkerService.pois.isNotEmpty)
+                              ? ReorderableListView.builder(
+                                onReorder: (oldIndex, newIndex) {
+                                  setState(() {
+                                    if (oldIndex < newIndex) {
+                                      newIndex -= 1;
+                                    }
+                                    currentDayMarkerService.reorderList(
+                                      oldIndex, newIndex,
+                                    );
+                                  });
+                                },
+                                scrollController: scrollController,
+                                itemCount: currentDayMarkerService.pois.length,
+                                itemBuilder: (context, index) {
+                                  final poi = currentDayMarkerService.pois[index];
+                                  return ListTile(
+                                    key: ValueKey(poi.id),
+                                    // ReorderableListView를 위한 고유 키
+                                    title: Text(poi.text!),
+                                    trailing: IconButton(
+                                      onPressed: () async {
+                                        await currentDayMarkerService.deleteList(poi.id); // 목록에서 POI 삭제
+                                        setState(() {}); // UI 업데이트
+                                        if (currentDayMarkerService.pois.isEmpty) {
+                                          draggableSheetController.jumpTo(0.2,); // 목록이 비면 시트 높이 줄임
+                                        }
+                                      },
+                                      icon: const Icon(Icons.close),
+                                    ),
+                                    onTap: () {
+                                      _showDialog(poi); // POI 이름 변경 다이얼로그 표시
+                                    },
+                                  );
+                                },
+                              )
+                              : Center(
+                                child: Text(
+                                  selectedDate == null
+                                      ? "여행 날짜를 설정해주세요"
+                                      : "경로 리스트가 비어있습니다.",
+                                ),
+                              ),
+                    ),
+                  ],
+                ),
               );
             },
           ),
