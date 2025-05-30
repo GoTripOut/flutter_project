@@ -12,15 +12,6 @@ import 'package:get/get.dart';
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widgets is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widgets) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -29,21 +20,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final globalValueController = Get.find<GlobalValueController>();
-  kakao.LatLng? myPosition;
+  final draggableSheetController = DraggableScrollableController();
+  final PageController pageController = PageController(); // 날짜 PageView 컨트롤러
 
-  // 최근에 클릭한 위치를 저장하는 변수 recentPostion
-  kakao.LatLng? recentPosition;
   kakao.KakaoMapController? mapController;
   kakao.LabelController? labelController;
   late TextEditingController textController; // 검색어 입력
+  kakao.LatLng? myPosition;
+
   bool mapLoading = false; // 맵 로딩 상태
+  bool locateLoading = false; // 위치 정보 로딩 상태
   int selectedIndex = 0;
-  MarkerService? markerService;
   kakao.LatLng? tappedPosition; // 지도 클릭 시 좌표 저장
-  final draggableSheetController = DraggableScrollableController();
   String? tappedPlaceName; // poi 이름
 
-  List<kakao.LatLng> visitedPosition = []; // 방문했던 위치들을 저장하는 스택
   Map<String, String> categoryMap = {
     "음식점": "FD6",
     "카페": "CE7",
@@ -59,17 +49,10 @@ class _MyHomePageState extends State<MyHomePage> {
   // 캐시 : 가져왔던 장소 리스트를 새로 요청하지 않고 사용
   Map<String, List<dynamic>> cachedPlaceList = {};
 
-  final PageController pageController = PageController(); // 날짜 PageView 컨트롤러
-  Map<DateTime, MarkerService> tripDatesMarkerServices =
-      {}; // 날짜별 MarkerService
+  Map<DateTime, MarkerService> tripDatesMarkerServices = {}; // 날짜별 MarkerService
   MarkerService? currentMarkerService; // 현재 선택된 날짜의 MarkerService
   List<DateTime> tripDates = []; // 여행 날짜 리스트
   DateTime? selectedDate; // 현재 선택된 날짜
-
-  // 위도, 경도 비교
-  bool _isSameLatLng(kakao.LatLng pos1, kakao.LatLng pos2) {
-    return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
-  }
 
   void _updateDate() async {
     final startDateString = globalValueController.startDate.value;
@@ -122,6 +105,8 @@ class _MyHomePageState extends State<MyHomePage> {
         tripDates.add(day);
         tripDatesMarkerServices[day] = MarkerService(
           mapController: mapController!,
+          initialRecentPosition: myPosition,
+          initialVisitedPosition: [myPosition!],
         );
       }
       setState(() {
@@ -161,15 +146,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // 선택된 여행지의 좌표
-  void _selectedPlacePosition() async {
+  Future<void> _selectedPlacePosition() async {
     String query = globalValueController.selectedPlace.value;
     kakao.LatLng? position = await RestApiService().getCoordinates(query);
     if (position != null) {
       setState(() {
         myPosition = position;
-        recentPosition = position;
-        visitedPosition.clear();
-        visitedPosition.add(position);
       });
       if (mapController != null && selectedDate != null && currentMarkerService == null) {
         currentMarkerService = tripDatesMarkerServices[selectedDate];
@@ -180,7 +162,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    //_initializePosition();
     _selectedPlacePosition();
     textController = TextEditingController();
     _updateDate();
@@ -197,8 +178,8 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  // 위치 초기화
-  void _initializePosition() async {
+  // 실제 내 위치 초기화
+  Future<void> _initializePosition() async {
     bool permission = await PositionService().getPermission();
     if (!permission) {
       return;
@@ -207,9 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (position != null) {
       setState(() {
         myPosition = position;
-        recentPosition = position;
-        visitedPosition.clear();
-        visitedPosition.add(position); // 초기 위치를 추가
+        currentMarkerService!.recentPosition = myPosition;
       });
     }
   }
@@ -233,17 +212,17 @@ class _MyHomePageState extends State<MyHomePage> {
         kakao.LatLng targetPosition;
         if (tappedPosition != null) {
           targetPosition = tappedPosition!;
-          if (visitedPosition.isEmpty ||
-              !_isSameLatLng(visitedPosition.last, targetPosition)) {
-            visitedPosition.add(targetPosition);
+          if (currentMarkerService!.visitedPosition.isEmpty ||
+              !currentMarkerService!.isSameLatLng(currentMarkerService!.visitedPosition.last, targetPosition)) {
+            currentMarkerService!.visitedPosition.add(targetPosition);
           }
         } else {
           // 지도 위의 poi를 클릭하지 않을 경우, 검색한 위치를 기반으로 경로 추가
-          targetPosition = recentPosition!;
+          targetPosition = currentMarkerService!.recentPosition!;
         }
 
         setState(() {
-          recentPosition = targetPosition; // 새로운 위치로 업데이트
+          currentMarkerService!.recentPosition = targetPosition; // 새로운 위치로 업데이트
         }); // UI 갱신
 
         await currentMarkerService!.addRoute(targetPosition, tappedPlaceName);
@@ -259,17 +238,20 @@ class _MyHomePageState extends State<MyHomePage> {
       case 2:
         await currentMarkerService!.resetRoute();
 
-        // 경로를 초기화하였으므로, 다시 현재 위치로 카메라를 돌아오게 한다.
-        mapController!.moveCamera(
-          kakao.CameraUpdate.newCenterPosition(myPosition!),
-        );
-        setState(() {
-          recentPosition = myPosition; // 최근 위치를 현재 위치로 설정
-          visitedPosition.clear();
-          visitedPosition.add(myPosition!);
-          tappedPlaceName = null;
-          tappedPosition = null;
-        }); // UI 갱신
+        // 경로를 초기화하였으므로, 다시 여행지 위치로 카메라를 돌아오게 한다.
+        await _selectedPlacePosition();
+        if (myPosition != null) {
+          mapController!.moveCamera(
+            kakao.CameraUpdate.newCenterPosition(myPosition!),
+          );
+          setState(() {
+            currentMarkerService!.recentPosition = myPosition; // 최근 위치를 현재 위치로 설정
+            currentMarkerService!.visitedPosition.clear();
+            currentMarkerService!.visitedPosition.add(myPosition!);
+            tappedPlaceName = null;
+            tappedPosition = null;
+          }); // UI 갱신
+        }
         break;
     }
   }
@@ -286,14 +268,14 @@ class _MyHomePageState extends State<MyHomePage> {
     kakao.LatLng? result = await RestApiService().getCoordinates(query);
     if (result != null) {
       setState(() {
-        if (visitedPosition.isNotEmpty &&
-            !_isSameLatLng(visitedPosition.last, recentPosition!)) {
-          visitedPosition.add(recentPosition!);
+        if (currentMarkerService!.visitedPosition.isNotEmpty &&
+            !currentMarkerService!.isSameLatLng(currentMarkerService!.visitedPosition.last, currentMarkerService!.recentPosition!)) {
+          currentMarkerService!.visitedPosition.add(currentMarkerService!.recentPosition!);
         }
-        recentPosition = result;
+        currentMarkerService!.recentPosition = result;
       });
       mapController!.moveCamera(
-        kakao.CameraUpdate.newCenterPosition(recentPosition!),
+        kakao.CameraUpdate.newCenterPosition(currentMarkerService!.recentPosition!),
       );
     }
     setState(() {
@@ -330,7 +312,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () async {
                 String newName = textController.text.trim();
                 if (newName.isNotEmpty) {
-                  await markerService!.renamePoi(poi, newName); // poi 이름 변경
+                  await currentMarkerService!.renamePoi(poi, newName); // poi 이름 변경
                   setState(() {}); // UI 갱신
                 }
                 Navigator.pop(context);
@@ -368,12 +350,12 @@ class _MyHomePageState extends State<MyHomePage> {
         kakao.CameraUpdate.newCenterPosition(placePosition),
       );
       setState(() {
-        if (visitedPosition.isEmpty ||
-            !_isSameLatLng(visitedPosition.last, placePosition)) {
-          visitedPosition.add(placePosition);
+        if (currentMarkerService!.visitedPosition.isEmpty ||
+            !currentMarkerService!.isSameLatLng(currentMarkerService!.visitedPosition.last, placePosition)) {
+          currentMarkerService!.visitedPosition.add(placePosition);
         }
         tappedPlaceName = placeName;
-        recentPosition = placePosition;
+        currentMarkerService!.recentPosition = placePosition;
       });
     }
   }
@@ -392,7 +374,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 onMapReady: (kakao.KakaoMapController controller) {
                   mapController = controller;
-                  markerService = MarkerService(mapController: mapController!);
+                  currentMarkerService = MarkerService(mapController: mapController!);
                   _updateDate();
                   print("카카오 지도가 정상적으로 불러와졌습니다.");
                 },
@@ -484,9 +466,9 @@ class _MyHomePageState extends State<MyHomePage> {
                               return;
                             }
 
-                            final currentLat = recentPosition!.latitude
+                            final currentLat = currentMarkerService!.recentPosition!.latitude
                                 .toStringAsFixed(6); // 소수점 6자리까지
-                            final currentLon = recentPosition!.longitude
+                            final currentLon = currentMarkerService!.recentPosition!.longitude
                                 .toStringAsFixed(6); // 소수점 6자리까지
                             final cacheKey =
                                 '$categoryName-$currentLat-$currentLon';
@@ -510,8 +492,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 'getPlaceList',
                                 placeInfo: [
                                   categoryCode!,
-                                  recentPosition!.longitude.toString(),
-                                  recentPosition!.latitude.toString(),
+                                  currentMarkerService!.recentPosition!.longitude.toString(),
+                                  currentMarkerService!.recentPosition!.latitude.toString(),
                                 ],
                               );
                               if (response.isNotEmpty) {
@@ -548,6 +530,14 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
           ),
+          if (locateLoading)  // 위치 정보 로딩중인 경우
+            Positioned.fill( // Stack의 모든 공간을 채움
+              child: Container(
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
+            ),
           Positioned(
             // 처음 위치로 돌아오는 버튼
             width: 40,
@@ -556,19 +546,30 @@ class _MyHomePageState extends State<MyHomePage> {
             right: 16.0,
             child: FloatingActionButton(
               heroTag: 'myLocation',
-              onPressed: () {
+              onPressed: () async {
+                setState(() {
+                  locateLoading = true; // 로딩 시작
+                });
+                await _initializePosition();
+
+                setState(() {
+                  locateLoading = false; // 로딩 완료
+                });
+
                 if (myPosition != null) {
                   mapController!.moveCamera(
                     kakao.CameraUpdate.newCenterPosition(myPosition!),
                   );
+                  setState(() {
+                    currentMarkerService!.recentPosition = myPosition;
+                    if (currentMarkerService!.visitedPosition.isEmpty ||
+                        !currentMarkerService!.isSameLatLng(currentMarkerService!.visitedPosition.last, myPosition!)) {
+                      currentMarkerService!.visitedPosition.add(myPosition!);
+                    }
+                    tappedPosition = null;
+                    tappedPlaceName = null;
+                  });
                 }
-                setState(() {
-                  recentPosition = myPosition;
-                  visitedPosition.clear();
-                  visitedPosition.add(myPosition!);
-                  tappedPosition = null;
-                  tappedPlaceName = null;
-                });
               },
               child: const Icon(Icons.my_location),
               backgroundColor: Colors.white,
@@ -586,12 +587,12 @@ class _MyHomePageState extends State<MyHomePage> {
               backgroundColor: Colors.white,
               onPressed: () {
                 setState(() {
-                  if (visitedPosition.length > 1) {
-                    visitedPosition.removeLast(); // 현재 위치를 스택에서 제거
-                    recentPosition =
-                        visitedPosition.last; // 스택의 마지막 (이전 위치)로 업데이트
+                  if (currentMarkerService!.visitedPosition.length > 1) {
+                    currentMarkerService!.visitedPosition.removeLast(); // 현재 위치를 스택에서 제거
+                    currentMarkerService!.recentPosition =
+                        currentMarkerService!.visitedPosition.last; // 스택의 마지막 (이전 위치)로 업데이트
                     mapController!.moveCamera(
-                      kakao.CameraUpdate.newCenterPosition(recentPosition!),
+                      kakao.CameraUpdate.newCenterPosition(currentMarkerService!.recentPosition!),
                     );
                     tappedPosition = null; // 뒤로 갈 때는 클릭 위치 초기화
                     tappedPlaceName = null; // 뒤로 갈 때는 클릭 이름 초기화
@@ -656,9 +657,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                   },
                                   itemBuilder: (context, index) {
                                     final date = tripDates[index];
+                                    final startDate = tripDates.first;
+                                    final dayDiff = date.difference(startDate).inDays;
+                                    final tripDay = dayDiff + 1; // 여행 몇일차인지 계산
                                     return Center(
                                       child: Text(
-                                        "${date.month}월 ${date.day}일",
+                                        "여행 ${tripDay}일차",
                                         style: TextStyle(
                                           fontSize: 17,
                                           fontWeight: FontWeight.bold,
@@ -711,13 +715,17 @@ class _MyHomePageState extends State<MyHomePage> {
                                   });
                                 },
                                 scrollController: scrollController,
-                                itemCount: currentDayMarkerService.pois.length,
+                                itemCount: currentDayMarkerService!.pois.length,
                                 itemBuilder: (context, index) {
-                                  final poi = currentDayMarkerService.pois[index];
+                                  if (index >= currentDayMarkerService!.pois.length) {
+                                    return const SizedBox.shrink(key: ValueKey('deleted_index')); // 삭제할 때 에러 방지
+                                  }
+                                  final poi = currentDayMarkerService!.pois[index];
                                   return ListTile(
                                     key: ValueKey(poi.id),
                                     // ReorderableListView를 위한 고유 키
                                     title: Text(poi.text!),
+                                    contentPadding: EdgeInsets.only(left: 16.0, right: 5.0),
                                     trailing: IconButton(
                                       onPressed: () async {
                                         await currentDayMarkerService.deleteList(poi.id); // 목록에서 POI 삭제

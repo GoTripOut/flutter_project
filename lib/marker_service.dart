@@ -9,7 +9,9 @@ class MarkerService {
   Map<String, String> uturnPoiConnected = {}; // 유턴 poi id, 이와 연결된 poi id
   List<kakao.Poi> uturnPois = []; // 유턴 poi 리스트
   List<kakao.Route> myRoute = []; // 경로에 포함된 poi 리스트
+  List<kakao.LatLng> visitedPosition = []; // 날짜별 방문 리스트
   String selectedPoiId = "";
+  kakao.LatLng? recentPosition; // 해당하는 날짜의 최근 위치
 
   final List<Color> routeColor = [
     Colors.grey.shade400,   // 회색
@@ -23,9 +25,18 @@ class MarkerService {
     List<kakao.Poi>? initialPois,
     List<kakao.LatLng>? initialPoiLat,
     List<kakao.Route>? initialRoute,
+    List<kakao.LatLng>? initialVisitedPosition,
+    kakao.LatLng? initialRecentPosition,
   }) : pois = initialPois ?? [],
   poiLat = initialPoiLat ?? [],
-  myRoute = initialRoute ?? [];
+  myRoute = initialRoute ?? [],
+  visitedPosition = initialVisitedPosition ?? [],
+  recentPosition = initialRecentPosition;
+
+  // 위도, 경도 비교
+  bool isSameLatLng(kakao.LatLng pos1, kakao.LatLng pos2) {
+    return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
+  }
 
   // 지도에서 기존 경로와 유턴 poi만 제거
   Future<void> removeRouteFromMap() async {
@@ -182,7 +193,8 @@ class MarkerService {
   Future<void> deleteList(String poiId) async {
     int index = pois.indexWhere((poi) => poi.id == poiId);
     if (index != -1) {
-      kakao.Poi selectedPoi = pois.removeAt(index);
+      kakao.Poi selectedPoi = pois[index];
+      pois.removeAt(index);
       poiLat.removeAt(index);
       await selectedPoi.remove();
 
