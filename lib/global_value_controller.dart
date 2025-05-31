@@ -11,6 +11,7 @@ class GlobalValueController extends GetxController{
   var selectedPlace = "".obs;
   var isFirstSelect = false.obs;
   var isSecondSelect = false.obs;
+  var selectedPlaceListID = 0.obs;
   var firstSelectedDate = Day(
     day: DateTime(0),
     isInMonth: false,
@@ -18,6 +19,7 @@ class GlobalValueController extends GetxController{
     isInRange: false,
     isSelected: false,
   ).obs;
+  var startDate = DateTime(0).obs;
   var secondSelectedDate = Day(
     day: DateTime(0),
     isInMonth: false,
@@ -25,6 +27,7 @@ class GlobalValueController extends GetxController{
     isInRange: false,
     isSelected: false,
   ).obs;
+  var endDate = DateTime(0).obs;
   var validWeeks = <bool>[false, false, false, false, false, false].obs;
 
   void updateServerUrl(String url){
@@ -49,13 +52,21 @@ class GlobalValueController extends GetxController{
 
   void updateFirstSelected(Day firstDate){
     firstSelectedDate.value = firstDate;
+    startDate.value = firstDate.day;
     isFirstSelect.value = true;
     update();
   }
 
   void updateSecondSelected(Day secondDate){
     secondSelectedDate.value = secondDate;
+    endDate.value = secondDate.day;
     isSecondSelect.value = true;
+    update();
+  }
+
+  void updateDate(DateTime start, DateTime end){
+    startDate.value = start;
+    endDate.value = end;
     update();
   }
 
@@ -73,11 +84,17 @@ class GlobalValueController extends GetxController{
       isInRange: false,
       isSelected: false,
     );
+    endDate.value = DateTime(0);
     update();
   }
 
   void updateValidWeeks(int i, bool valid){
     validWeeks[i] = valid;
+    update();
+  }
+
+  void updateSelectedPlaceListID(int id){
+    selectedPlaceListID.value = id;
     update();
   }
 

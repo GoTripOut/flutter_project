@@ -132,13 +132,7 @@ class _LoginState extends State<LoginPage> {
                           if(userAuthentication) {
                             Get.find<GlobalValueController>().updateUserID(id!);
                             Get.off(
-                              SafeArea(
-                                top: false,
-                                left: false,
-                                right: false,
-                                bottom: true,
-                                child: MainPage()
-                              )
+                              MainPage()
                             );
                           }
                         },

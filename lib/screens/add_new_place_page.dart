@@ -67,8 +67,8 @@ class _AddNewPlacePageState extends State<AddNewPlacePage>{
                   width: screenWidth * 0.88,
                   height: screenHeight,
                   child: isSearching
-                      ? RouteListBuilder(controller: widget.controller, routeContent: filteredList..sort((a, b) => (a[0]).compareTo(b[0])), addNewRoute: true,)
-                      : RouteListBuilder(controller: widget.controller, routeContent: placeList..sort((a, b) => a[0].compareTo(b[0])), addNewRoute: true,),
+                      ? RouteListBuilder(controller: widget.controller, routeContents: filteredList..sort((a, b) => (a[0]).compareTo(b[0])), addNewRoute: true,)
+                      : RouteListBuilder(controller: widget.controller, routeContents: placeList..sort((a, b) => a[0].compareTo(b[0])), addNewRoute: true,),
                 ),
               ),
             ),

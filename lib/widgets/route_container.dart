@@ -10,11 +10,13 @@ class RouteContainer extends StatefulWidget{
   const RouteContainer({
     super.key,
     required this.place,
+    this.placeListID = -1,
     this.startDate = "",
     this.endDate = "",
     this.controller,
   });
   final PageController? controller;
+  final int placeListID;
   final String place;
   final String startDate;
   final String endDate;
@@ -121,8 +123,13 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
           TextButton(
             onPressed: () {
               valueController.updateSelectedPlace(widget.place);
-              widget.startDate != "" ?
-              Get.to(MyHomePage(title: 'demo')):showCalendarBottomSheet();
+              if(widget.startDate != ""){
+                valueController.updateDate(DateTime.parse(widget.startDate), DateTime.parse(widget.endDate));
+                valueController.updateSelectedPlaceListID(widget.placeListID);
+                Get.to(MyHomePage(title: 'demo'));
+              } else {
+                showCalendarBottomSheet();
+              }
             },
             style: TextButton.styleFrom(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),

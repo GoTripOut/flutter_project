@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 
-Future<String> sendRequest(String action, {List<String>? newPlace, List<String>? placeInfo, String? userID, String? userPW}) async{
+Future<String> sendRequest(String action, {List<String>? newPlace, List<String>? curPlaceInfo, List<dynamic>? placeInfo, String? userID, String? userPW}) async{
   final serverController = Get.find<GlobalValueController>();    //Getx를 이용한 프로그램 전역 상태 변수 관리
   String? urlStr = serverController.serverUrl.value;        //backend server의 HTTP URL획득
 
@@ -18,7 +18,7 @@ Future<String> sendRequest(String action, {List<String>? newPlace, List<String>?
       headers: {'Content-Type': 'application/json'},
     );
   } else if(action == 'getPlaceList'){
-    urlStr = '${urlStr}list/${placeInfo![0]}?x=${placeInfo[1]}&y=${placeInfo[2]}';
+    urlStr = '${urlStr}list/${curPlaceInfo![0]}?x=${curPlaceInfo[1]}&y=${curPlaceInfo[2]}';
     url = Uri.parse(urlStr);
     response = await http.post(
       url,
@@ -41,7 +41,32 @@ Future<String> sendRequest(String action, {List<String>? newPlace, List<String>?
     urlStr = '${urlStr}get_user_place?userID=${userID!}';
     url = Uri.parse(urlStr);
     response = await http.get(url);
-  }else{
+  } else if(action == 'insert_place_info'){
+    urlStr = '${urlStr}insert_place_info';
+    url = Uri.parse(urlStr);
+    response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "placeListID": placeInfo![0],
+        "placeName": placeInfo[1],
+        "x": placeInfo[2],
+        "y": placeInfo[3],
+        "aiScore": placeInfo[4],
+        "phoneNumber": placeInfo[5],
+        "order": placeInfo[6],
+      })
+    );
+  } else if(action == "get_place_info"){
+    urlStr = '${urlStr}get_place_info?placeListID=${placeInfo![0]}';
+    url = Uri.parse(urlStr);
+    response = await http.get(url);
+  } else if(action == 'init_place_info'){
+    print("place_id: ${placeInfo![0]}");
+    urlStr = '${urlStr}init_place_info?placeListID=${placeInfo![0]}';
+    url = Uri.parse(urlStr);
+    response = await http.post(url);
+  }else {
     url = Uri.parse(urlStr);
     response = await http.get(url);
   }
