@@ -96,22 +96,7 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
             )
           );
         },
-      ).then((_){
-        valueController.updateFirstSelected(Day(
-          day: DateTime(0),
-          isInMonth: true,
-          isVisible: true,
-          isInRange: false,
-          isSelected: false,
-        ));
-        valueController.updateSecondSelected(Day(
-          day: DateTime(0),
-          isInMonth: true,
-          isVisible: true,
-          isInRange: false,
-          isSelected: false,
-        ));
-      });
+      );
     }
     return SizedBox(
       width: screenWidth * 0.88,

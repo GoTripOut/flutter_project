@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
   }
-
+  //페이지 활성화 시 기존 추천 경로 데이터를 불러와 지도에 적용하는 함수
   void _initMarkerInfo() async {
     String? response = await sendRequest('get_place_info', placeInfo: [globalValueController.selectedPlaceListID.value]);
     final decodeResponse = jsonDecode(response);
@@ -215,7 +215,7 @@ class _MyHomePageState extends State<MyHomePage> {
       case 3:
         markerService?.updatePlan();
         Get.to(MainPage());
-        break;
+        break;  //추천 경로 정보 DB 업데이트 및 메인 페이지 이동
     }
   }
 
@@ -294,7 +294,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SafeArea(
+        builder: (context) => SafeArea(   //SafeArea추가
           child: CategoryPlaceListPage(
             categoryName: categoryName,
             placesJson: placesJson,
@@ -309,6 +309,7 @@ class _MyHomePageState extends State<MyHomePage> {
         result['latitude'],
         result['longitude'],
       );
+      //CategoryPlaceListPage 반환 값에 aiScore 추가
       final aiScore = result['aiScore'];
       mapController!.moveCamera(
         kakao.CameraUpdate.newCenterPosition(placePosition),
@@ -331,8 +332,8 @@ class _MyHomePageState extends State<MyHomePage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final topPadding = MediaQuery.of(context).padding.top;
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
+      extendBodyBehindAppBar: true, //appBar가 body부분과 겹쳐지도록 설정
+      appBar: AppBar(   //검색창 부분이 상단바 영역을 침범하지 않도록 appBar로 분리
         automaticallyImplyLeading: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -425,7 +426,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 spacing: 5,
                 children: [
-                  CircularProgressIndicator(),
+                  CircularProgressIndicator(),    //요청 중일 경우 로딩 인디케이터 센터에 표시
                   Text(
                       "추천 장소 검색 중...",
                       style: TextStyle(
@@ -478,7 +479,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           final String? categoryCode = categoryMap[categoryName];
                           final response = await sendRequest(
                             'getPlaceList',
-                            curPlaceInfo: [
+                            curPlaceInfo: [   //변수 이름 placeInfo  -> curPlaceInfo로 변경
                               categoryCode!,
                               recentPosition!.longitude.toString(),
                               recentPosition!.latitude.toString(),
@@ -647,7 +648,7 @@ class _MyHomePageState extends State<MyHomePage> {
             label: "경로 삭제",
           ),
           BottomNavigationBarItem(icon: Icon(Icons.refresh), label: "경로 초기화"),
-          BottomNavigationBarItem(icon: Icon(Icons.check, color: Colors.green), label: "여행 추가 하기")
+          BottomNavigationBarItem(icon: Icon(Icons.check, color: Colors.green), label: "여행 추가 하기")    //여행 추가 버튼 추가
         ],
       ),
     );

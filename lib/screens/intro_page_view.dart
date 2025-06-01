@@ -82,7 +82,7 @@ class _IntroPageViewState extends State<IntroPageView>{
             onPressed: () async {
               int pageIndex = valueController.introPageIndex.value;
               valueController.updateIntroPageIndex(++pageIndex);
-              if(pageIndex == 3){
+              if(pageIndex == 4){
                 DateTime startDate = valueController.firstSelectedDate.value.day;
                 DateTime endDate = valueController.secondSelectedDate.value.day;
                 String result = await sendRequest('insert_new_place', newPlace: [valueController.selectedPlace.value, DateFormat('yyyy-MM-dd').format(startDate), DateFormat('yyyy-MM-dd').format(endDate)], userID: valueController.userID.value);
