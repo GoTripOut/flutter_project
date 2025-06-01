@@ -242,8 +242,6 @@ class MarkerService {
 
   // 모든 poi와 경로를 지도에 숨김
   Future<void> hideFromMap() async {
-    //mapController.routeLayer.hideAllRoute();
-    //mapController.labelLayer.hideAllPoi();
     for (kakao.Poi poi in pois) {
       if (poi.visible) {
         await poi.hide();
@@ -263,8 +261,6 @@ class MarkerService {
 
   // 모든 poi와 경로를 지도에서 보여줌
   Future<void> showFromMap() async {
-    //mapController.routeLayer.showAllRoute();
-    //mapController.labelLayer.showAllPoi();
     for (kakao.Poi poi in pois) {
       if (!poi.visible) {
         await poi.show();

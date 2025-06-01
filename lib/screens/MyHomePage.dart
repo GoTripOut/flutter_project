@@ -622,8 +622,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     topRight: Radius.circular(50),
                   ),
                 ),
-                child: Column(
+                child: Column( // 상단바 추가
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0), // 상단바 위아래 여백
+                      child: Container(
+                        width: 50,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300], // 연한 회색
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
                     // 날짜 선택 PageView
                     if (tripDates.isNotEmpty)
                       Padding(
