@@ -10,7 +10,7 @@ class FavoriteSelectionPage2 extends StatefulWidget {
 
 class _FavoriteSelectionPage2State extends State<FavoriteSelectionPage2> {
   List<String> selectedButtons = [];
-  List<bool> _isSelected = [false, false, false, false];
+  final List<bool> _isSelected = [false, false, false, false];
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -33,7 +33,7 @@ class _FavoriteSelectionPage2State extends State<FavoriteSelectionPage2> {
           crossAxisAlignment: CrossAxisAlignment.end,
           spacing: 140,
           children: [
-            Container(  //Title
+            SizedBox(  //Title
               width: double.infinity,
               child: Column(
                 mainAxisSize: MainAxisSize.min,

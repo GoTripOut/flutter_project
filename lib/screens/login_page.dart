@@ -132,13 +132,7 @@ class _LoginState extends State<LoginPage> {
                           if(userAuthentication) {
                             Get.find<GlobalValueController>().updateUserID(id!);
                             Get.off(
-                              SafeArea(
-                                top: false,
-                                left: false,
-                                right: false,
-                                bottom: true,
-                                child: MainPage()
-                              )
+                              MainPage()
                             );
                           }
                         },
@@ -150,8 +144,6 @@ class _LoginState extends State<LoginPage> {
                       ),
                       IconTextButton(
                         onTap:(){
-                          List<String> placeInfo = ["CE7", "127.743288", "37.872316"];
-                          // sendRequest("getPlaceList", placeInfo: placeInfo);
                           Get.to(
                             SafeArea(
                               child: SignupPage()

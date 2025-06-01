@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sample_flutter_project/screens/favorite_selection_page_1.dart';
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
   @override

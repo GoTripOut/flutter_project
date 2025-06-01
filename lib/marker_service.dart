@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart' as kakao;
+import 'package:sample_flutter_project/fetch_fastapi_data.dart';
+import 'package:sample_flutter_project/global_value_controller.dart';
 import 'coordinate_service.dart';
 
 class MarkerService {
   kakao.KakaoMapController mapController;
+  var valueController = Get.find<GlobalValueController>();
+  List<String> places = []; // 추가된 장소 이름을 저장하는 리스트
+  List<int?> aiScores = []; // 추가된 장소의 AIScore를 저장하는 리스트
   List<kakao.Poi> pois = []; // poi를 저장하는 리스트
   List<kakao.LatLng> poiLat = []; // poi의 좌표 리스트
   Map<String, String> uturnPoiConnected = {}; // 유턴 poi id, 이와 연결된 poi id
@@ -12,7 +18,7 @@ class MarkerService {
   List<kakao.LatLng> visitedPosition = []; // 날짜별 방문 리스트
   String selectedPoiId = "";
   kakao.LatLng? recentPosition; // 해당하는 날짜의 최근 위치
-
+  int selectedDay;
   final List<Color> routeColor = [
     Colors.grey.shade400,   // 회색
     Colors.green.shade400,  // 초록색
@@ -22,6 +28,7 @@ class MarkerService {
 
   MarkerService({
     required this.mapController,
+    required this.selectedDay,
     List<kakao.Poi>? initialPois,
     List<kakao.LatLng>? initialPoiLat,
     List<kakao.Route>? initialRoute,
@@ -112,8 +119,8 @@ class MarkerService {
     }
   }
 
-  // 경로 추가
-  Future<void> addRoute(kakao.LatLng recentPosition, poiName) async {
+  // 경로 추가 - aiScore 추가함
+  Future<void> addRoute(kakao.LatLng recentPosition, String? poiName, int? aiScore) async {
     if (poiLat.contains(recentPosition)) {
       print("이미 추가된 위치입니다");
       return;
@@ -127,6 +134,8 @@ class MarkerService {
         ),
         text: poiName ?? "경로",
       );
+      places.add(poiName ?? "경로");
+      aiScores.add(aiScore);
       pois.add(poi);
       poiLat.add(recentPosition);
 
@@ -181,6 +190,8 @@ class MarkerService {
       mapController.routeLayer.removeRoute(route);
     }
     // 리스트 초기화
+    places.clear();
+    aiScores.clear();
     pois.clear();
     poiLat.clear();
     uturnPois.clear();
@@ -195,6 +206,8 @@ class MarkerService {
     if (index != -1) {
       kakao.Poi selectedPoi = pois[index];
       pois.removeAt(index);
+      aiScores.removeAt(index);
+      places.removeAt(index);
       poiLat.removeAt(index);
       await selectedPoi.remove();
 
@@ -220,6 +233,10 @@ class MarkerService {
   Future<void> reorderList(int oldIndex, int newIndex) async {
     kakao.Poi prePoi = pois.removeAt(oldIndex);
     kakao.LatLng preLat = poiLat.removeAt(oldIndex);
+    String place = places.removeAt(oldIndex);
+    int? aiScore = aiScores.removeAt(oldIndex);
+    aiScores.insert(newIndex, aiScore);
+    places.insert(newIndex, place);
     pois.insert(newIndex, prePoi);
     poiLat.insert(newIndex, preLat);
     await redrawRoute(); // 경로를 다시 그림
@@ -231,6 +248,7 @@ class MarkerService {
     int index = pois.indexWhere((p) => p.id == poi.id);
     if (index != -1) {
       pois[index] = poi; // 리스트 업데이트
+      places[index] = newName;
     }
   }
 
@@ -259,6 +277,28 @@ class MarkerService {
     }
   }
 
+  // 추가/변경 된 추천 경로 정보를 백엔드 서버로 전송 및 업데이트
+  Future<void> updatePlan() async{
+    if(selectedDay > 1) {
+      await sendRequest(
+          'init_place_info', placeInfo: [valueController.selectedPlaceListID]);
+    }
+    for(int i = 0; i < places.length; i++) {
+      await sendRequest(
+        'insert_place_info',
+        placeInfo: [
+          valueController.selectedPlaceListID.value,
+          places[i],
+          poiLat[i].longitude,
+          poiLat[i].latitude,
+          aiScores[i],
+          null,
+          i,
+          selectedDay,
+        ]
+      );
+    }
+  }
   // 모든 poi와 경로를 지도에서 보여줌
   Future<void> showFromMap() async {
     for (kakao.Poi poi in pois) {
