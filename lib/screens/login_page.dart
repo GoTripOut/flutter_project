@@ -144,8 +144,6 @@ class _LoginState extends State<LoginPage> {
                       ),
                       IconTextButton(
                         onTap:(){
-                          List<String> placeInfo = ["CE7", "127.743288", "37.872316"];
-                          // sendRequest("getPlaceList", placeInfo: placeInfo);
                           Get.to(
                             SafeArea(
                               child: SignupPage()

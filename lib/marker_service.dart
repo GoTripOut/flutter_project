@@ -18,7 +18,7 @@ class MarkerService {
   List<kakao.LatLng> visitedPosition = []; // 날짜별 방문 리스트
   String selectedPoiId = "";
   kakao.LatLng? recentPosition; // 해당하는 날짜의 최근 위치
-
+  int selectedDay;
   final List<Color> routeColor = [
     Colors.grey.shade400,   // 회색
     Colors.green.shade400,  // 초록색
@@ -28,6 +28,7 @@ class MarkerService {
 
   MarkerService({
     required this.mapController,
+    required this.selectedDay,
     List<kakao.Poi>? initialPois,
     List<kakao.LatLng>? initialPoiLat,
     List<kakao.Route>? initialRoute,
@@ -278,7 +279,10 @@ class MarkerService {
 
   // 추가/변경 된 추천 경로 정보를 백엔드 서버로 전송 및 업데이트
   Future<void> updatePlan() async{
-    await sendRequest('init_place_info', placeInfo: [valueController.selectedPlaceListID]);
+    if(selectedDay > 1) {
+      await sendRequest(
+          'init_place_info', placeInfo: [valueController.selectedPlaceListID]);
+    }
     for(int i = 0; i < places.length; i++) {
       await sendRequest(
         'insert_place_info',
@@ -290,6 +294,7 @@ class MarkerService {
           aiScores[i],
           null,
           i,
+          selectedDay,
         ]
       );
     }

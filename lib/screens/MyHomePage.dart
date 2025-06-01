@@ -62,7 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return pos1.latitude == pos2.latitude && pos1.longitude == pos2.longitude;
   }
 
-  void _updateDate() {
+  Future<void> _updateDate() async {
 
     // 직접 날짜 문자열을 파싱
     DateTime startDate = globalValueController.startDate.value;
@@ -85,8 +85,10 @@ class _MyHomePageState extends State<MyHomePage> {
           mapController: mapController!,
           initialRecentPosition: myPosition,
           initialVisitedPosition: [myPosition!],
+          selectedDay: day.difference(startDate).inDays + 1,
         );
       }
+      await _initMarkerInfo();
       setState(() {
         selectedDate = DateTime(startDate.year, startDate.month, startDate.day,); // 초기 선택 날짜는 여행의 첫 날짜로 설정
         currentMarkerService = tripDatesMarkerServices[selectedDate]; // 현재 MarkerService 설정
@@ -133,22 +135,26 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
   //페이지 활성화 시 기존 추천 경로 데이터를 불러와 지도에 적용하는 함수
-  void _initMarkerInfo() async {
+  Future<void> _initMarkerInfo() async {
     String? response = await sendRequest('get_place_info', placeInfo: [globalValueController.selectedPlaceListID.value]);
     final decodeResponse = jsonDecode(response);
     for(var markerData in decodeResponse){
-      kakao.LatLng markerPos = kakao.LatLng(double.parse(markerData[4]), double.parse(markerData[3]));
+      kakao.LatLng markerPos = kakao.LatLng(double.parse(markerData[4]), double.parse(markerData[3]));    //x, y값
       myPosition = markerPos;
-      recentPosition = markerPos;
-      await markerService!.addRoute(markerPos, markerData[2], markerData[5]);
-      visitedPosition.add(markerPos);
+      for(MarkerService service in tripDatesMarkerServices.values){
+        if(service.selectedDay != 1){
+          await service.hideFromMap();
+        }
+        if(service.selectedDay == markerData[8]){
+          service.recentPosition = markerPos;
+          await service.addRoute(markerPos, markerData[2], markerData[5]);
+          service.visitedPosition.add(markerPos);
+        }
+      }
     }
     mapController!.moveCamera(
       kakao.CameraUpdate.newCenterPosition(myPosition!),
     );
-    setState(() {
-      
-    });
   }
 
   @override
@@ -248,7 +254,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
         break;
       case 3:
-        markerService?.updatePlan();
+        currentMarkerService?.updatePlan();
         Get.to(MainPage());
         break;  //추천 경로 정보 DB 업데이트 및 메인 페이지 이동
     }
@@ -424,11 +430,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             onMapReady: (kakao.KakaoMapController controller) {
               mapController = controller;
-              currentMarkerService = MarkerService(
-                mapController: mapController!,
-              );
               _updateDate();
-              _initMarkerInfo();
               print("카카오 지도가 정상적으로 불러와졌습니다.");
             },
             onMapClick: (kakao.KPoint point, kakao.LatLng position) {
@@ -597,9 +599,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                 }
                 setState(() {
-                  recentPosition = myPosition;
-                  visitedPosition.clear();
-                  visitedPosition.add(myPosition!);
+                  currentMarkerService!.recentPosition = myPosition;
+                  currentMarkerService!.visitedPosition.clear();
+                  currentMarkerService!.visitedPosition.add(myPosition!);
                   tappedPosition = null;
                   tappedPlaceName = null;
                   tappedPlaceAIScore = null;
@@ -761,12 +763,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                   });
                                 },
                                 scrollController: scrollController,
-                                itemCount: currentDayMarkerService!.pois.length,
+                                itemCount: currentDayMarkerService.pois.length,
                                 itemBuilder: (context, index) {
-                                  if (index >= currentDayMarkerService!.pois.length) {
+                                  if (index >= currentDayMarkerService.pois.length) {
                                     return const SizedBox.shrink(key: ValueKey('deleted_index')); // 삭제할 때 에러 방지
                                   }
-                                  final poi = currentDayMarkerService!.pois[index];
+                                  final poi = currentDayMarkerService.pois[index];
                                   return ListTile(
                                     key: ValueKey(poi.id),
                                     // ReorderableListView를 위한 고유 키

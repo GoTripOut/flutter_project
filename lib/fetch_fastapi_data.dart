@@ -55,6 +55,7 @@ Future<String> sendRequest(String action, {List<String>? newPlace, List<String>?
         "aiScore": placeInfo[4],
         "phoneNumber": placeInfo[5],
         "order": placeInfo[6],
+        "day": placeInfo[7],
       })
     );
   } else if(action == "get_place_info"){
