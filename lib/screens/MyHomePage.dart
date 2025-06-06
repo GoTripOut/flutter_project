@@ -6,6 +6,7 @@ import 'package:sample_flutter_project/marker_service.dart';
 import 'package:sample_flutter_project/position_service.dart';
 import 'package:sample_flutter_project/coordinate_service.dart';
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
+import '../widgets/category_selector_sheet.dart';
 import 'category_place_page.dart';
 import 'package:get/get.dart';
 
@@ -609,6 +610,32 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               backgroundColor: Colors.white,
               child: const Icon(Icons.my_location),
+            ),
+          ),
+          Positioned(
+            // AI 경로 추천 버튼
+            width: 40,
+            height: 40,
+            bottom: 150.0,
+            left: MediaQuery.of(context).size.width / 2 - 20, // 버튼 너비가 40이므로 반 나눈 값
+            child: Center(
+              child: FloatingActionButton(
+                heroTag: 'aiRoute',
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.auto_fix_high),
+                onPressed: () async {
+                  // 1. 카테고리 우선순위 선택
+                  final orderedCategories = await showModalBottomSheet<List<String>>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) {
+                      return CategorySelectorSheet(
+                        categoryMap: categoryMap, // Map<String, String
+                      );
+                    }
+                  );
+                },
+              ),
             ),
           ),
           Positioned(
