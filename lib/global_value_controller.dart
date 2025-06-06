@@ -40,6 +40,7 @@ class GlobalValueController extends GetxController{
   }
 
   Future<bool> updatePlaceList() async {
+    isGetPlaceList.value = false;
     String response = await sendRequest('get_user_place', userID: userID.value);
     print("upate_place_list");
     if(response != "failed"){

@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 import '../widgets/route_list_builder.dart';
 import 'intro_page_view.dart';
@@ -114,8 +111,8 @@ class _MainPageState extends State<MainPage>{
                           width: screenWidth * 0.88,
                           height: screenHeight,
                           child: isSearching        //검색 중일 경우 검색한 내용만, 아닐 경우 모든 내용을 내림차순 출력
-                            ? RouteListBuilder(routeContents: filteredList..sort((a, b) => DateTime.parse(a[4]).compareTo(DateTime.parse(b[4]))), addNewRoute: false, )
-                            : RouteListBuilder(routeContents: placeList..sort((a, b) => DateTime.parse(a[4]).compareTo(DateTime.parse(b[4]))), addNewRoute: false,)
+                            ? RouteListBuilder(routeContents: filteredList, addNewRoute: false,)
+                            : RouteListBuilder(routeContents: placeList, addNewRoute: false,)
                         ),
                       ),
                     ),

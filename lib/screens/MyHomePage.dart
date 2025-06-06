@@ -6,6 +6,7 @@ import 'package:sample_flutter_project/marker_service.dart';
 import 'package:sample_flutter_project/position_service.dart';
 import 'package:sample_flutter_project/coordinate_service.dart';
 import 'package:sample_flutter_project/fetch_fastapi_data.dart';
+import '../widgets/category_selector_sheet.dart';
 import 'category_place_page.dart';
 import 'package:get/get.dart';
 
@@ -162,7 +163,6 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _selectedPlacePosition();
     textController = TextEditingController();
-    _updateDate();
   }
 
   @override
@@ -254,7 +254,9 @@ class _MyHomePageState extends State<MyHomePage> {
         }
         break;
       case 3:
-        currentMarkerService?.updatePlan();
+        tripDatesMarkerServices.forEach((key, markerService) {
+          markerService.updatePlan();
+        });
         Get.to(MainPage());
         break;  //추천 경로 정보 DB 업데이트 및 메인 페이지 이동
     }
@@ -353,9 +355,13 @@ class _MyHomePageState extends State<MyHomePage> {
       );
       //CategoryPlaceListPage 반환 값에 aiScore 추가
       final aiScore = result['aiScore'];
+
       mapController!.moveCamera(
         kakao.CameraUpdate.newCenterPosition(placePosition),
       );
+
+      print("선택된 장소 result: $result");
+      await currentMarkerService!.addRoute(placePosition, placeName, aiScore);
 
       setState(() {
         if (currentMarkerService!.visitedPosition.isEmpty ||
@@ -610,6 +616,88 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               backgroundColor: Colors.white,
               child: const Icon(Icons.my_location),
+            ),
+          ),
+          Positioned(
+            // AI 경로 추천 버튼
+            width: 40,
+            height: 40,
+            bottom: 150.0,
+            left: MediaQuery.of(context).size.width / 2 - 20, // 버튼 너비가 40이므로 반 나눈 값
+            child: Center(
+              child: FloatingActionButton(
+                heroTag: 'aiRoute',
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.auto_fix_high),
+                onPressed: () async {
+                  // 1. 카테고리 우선순위 선택
+                  final orderedCategories = await showModalBottomSheet<List<String>>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) {
+                      return CategorySelectorSheet(
+                        categoryMap: categoryMap, // Map<String, String
+                      );
+                    }
+                  );
+                  print("AI 추천 경로 입력으로 받아온 리스트: ${orderedCategories}");
+
+                  // 2. 요청받아온 카테고리 리스트(최대 5개)를 순서대로 요청하기
+                  if (orderedCategories != null && orderedCategories.isNotEmpty) {
+                    for (final categoryName in orderedCategories) {
+                      try {
+                        globalValueController.isLoading.value = true;
+
+                        final String? categoryCode = categoryMap[categoryName];
+                        if (categoryCode == null) continue;
+
+                        final response = await sendRequest(
+                          'getPlaceList',
+                          curPlaceInfo: [
+                            categoryCode,
+                            currentMarkerService!.recentPosition!.longitude.toString(),
+                            currentMarkerService!.recentPosition!.latitude.toString(),
+                          ],
+                        );
+
+                        if (response.isNotEmpty) {
+                          // 선택한 장소 리스트 화면 이동 등 처리
+                          _moveCategoryPlacePage(categoryName, response);
+
+                          final cacheKey = "$categoryCode-${currentMarkerService!.recentPosition}";
+                          cachedPlaceList[cacheKey] = jsonDecode(response);
+
+                          // 💡 여기서 first result 하나 뽑아서 현재 위치 업데이트 (예시)
+                          final List<dynamic> places = jsonDecode(response);
+
+                          print("tappedName: ${tappedPlaceName}");
+
+                          // if (places.isNotEmpty) {
+                          //
+                          //   setState(() {
+                          //     currentMarkerService!.recentPosition = poi;
+                          //   });
+                          //
+                          //   mapController!.moveCamera(
+                          //     kakao.CameraUpdate.newCenterPosition(poi),
+                          //   );
+                          //
+                          //   print("placeName = ${placeName}");
+                          //
+                          //   currentMarkerService!.addRoute(poi, placeName, null);
+                          // }
+
+
+                        }
+                      } catch (e) {
+                        print("[$categoryName] 장소 요청 실패: $e");
+                      } finally {
+                        globalValueController.isLoading.value = false;
+                      }
+                    }
+                  }
+                },
+              ),
             ),
           ),
           Positioned(
