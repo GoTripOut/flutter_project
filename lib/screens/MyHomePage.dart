@@ -254,7 +254,9 @@ class _MyHomePageState extends State<MyHomePage> {
         }
         break;
       case 3:
-        currentMarkerService?.updatePlan();
+        tripDatesMarkerServices.forEach((key, markerService) {
+          markerService.updatePlan();
+        });
         Get.to(MainPage());
         break;  //추천 경로 정보 DB 업데이트 및 메인 페이지 이동
     }

@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 import '../widgets/route_list_builder.dart';
 import 'intro_page_view.dart';

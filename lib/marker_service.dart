@@ -278,7 +278,7 @@ class MarkerService {
   }
 
   // 추가/변경 된 추천 경로 정보를 백엔드 서버로 전송 및 업데이트
-  Future<void> updatePlan() async{
+  Future<void> updatePlan() async {
     if(selectedDay > 1) {
       await sendRequest(
           'init_place_info', placeInfo: [valueController.selectedPlaceListID]);
