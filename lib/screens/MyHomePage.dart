@@ -163,7 +163,6 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _selectedPlacePosition();
     textController = TextEditingController();
-    _updateDate();
   }
 
   @override

@@ -52,7 +52,6 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
       _routeList[markerData[8] - 1].add([markerData[7], markerData[2]]);
       print("Route_list: ${_routeList}");
     }
-
   }
   @override
   Widget build(BuildContext context) {
