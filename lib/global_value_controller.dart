@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 
+import 'fetch_fastapi_data.dart';
 import 'widgets/day.dart';
 
 class GlobalValueController extends GetxController{
   var serverUrl = "".obs;
   var isLoading = false.obs; // 요청 진행중
+  var isGetPlaceList = false.obs;
   var userID = "".obs;
   var placeList = [].obs;
   var introPageIndex = 0.obs;
@@ -35,9 +39,19 @@ class GlobalValueController extends GetxController{
     update();
   }
 
-  void updatePlaceList(List<String> list){
-    placeList.value = list;
-    update();
+  Future<bool> updatePlaceList() async {
+    String response = await sendRequest('get_user_place', userID: userID.value);
+    print("upate_place_list");
+    if(response != "failed"){
+      placeList.value = jsonDecode(await sendRequest('get_user_place', userID: userID.value));
+      update();
+      isGetPlaceList.value = true;
+      return true;
+    } else {
+      isGetPlaceList.value = false;
+      return true;
+    }
+
   }
 
   void updateUserID(String id){
