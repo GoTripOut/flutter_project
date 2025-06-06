@@ -87,7 +87,7 @@ class _CategoryPlaceListPageState extends State<CategoryPlaceListPage> {
           final statusDescription = place['status_description'];
           final visitorReviewScore = place['visitorReviewScore'];
           final visitorReviewCount = place['visitorReviewCount'];
-          final double aiScore = place['AI_score']; // int -> double 수정 (AI Score 실수로 변경)
+          final aiScore = place['AI_score'];
           double rating = 0;
           if (visitorReviewScore != null) {
             rating = double.tryParse(visitorReviewScore) ?? 0.0;
