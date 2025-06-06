@@ -67,7 +67,11 @@ Future<String> sendRequest(String action, {List<String>? newPlace, List<String>?
     urlStr = '${urlStr}init_place_info?placeListID=${placeInfo![0]}';
     url = Uri.parse(urlStr);
     response = await http.post(url);
-  }else {
+  } else if(action == "delete_place_list") {
+    urlStr = '${urlStr}delete_place_list?placeListID=${placeInfo![0]}';
+    url = Uri.parse(urlStr);
+    response = await http.post(url);
+  } else {
     url = Uri.parse(urlStr);
     response = await http.get(url);
   }
@@ -76,8 +80,10 @@ Future<String> sendRequest(String action, {List<String>? newPlace, List<String>?
   if (response.statusCode == 200) {
     final data = jsonDecode(response.body);
     print('응답 데이터: $data');
+    return response.body;
   } else {
     print('오류 발생: ${response.statusCode}');
+    return 'failed';
   }
-  return response.body;
+
 }

@@ -16,6 +16,7 @@ void listenFastAPIBroadCast() async {
       if(datagram != null){
         print("getDatagram");
         String serverUrl = String.fromCharCodes(datagram.data).trim();
+        print(serverUrl);
         final response = await http.get(Uri.parse("${serverUrl}get_connect_state"));
         if(response.statusCode == 200) {
           print(response.body);

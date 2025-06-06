@@ -88,6 +88,7 @@ class _IntroPageViewState extends State<IntroPageView>{
                 String result = await sendRequest('insert_new_place', newPlace: [valueController.selectedPlace.value, DateFormat('yyyy-MM-dd').format(startDate), DateFormat('yyyy-MM-dd').format(endDate)], userID: valueController.userID.value);
                 final decodeResult = jsonDecode(result);
                 valueController.updateSelectedPlaceListID(decodeResult[0][0]);
+                valueController.updatePlaceList();
               }
               _pageController.nextPage(
                 duration: const Duration(milliseconds: 300),
