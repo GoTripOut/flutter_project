@@ -9,7 +9,7 @@ class MarkerService {
   kakao.KakaoMapController mapController;
   var valueController = Get.find<GlobalValueController>();
   List<String> places = []; // 추가된 장소 이름을 저장하는 리스트
-  List<int?> aiScores = []; // 추가된 장소의 AIScore를 저장하는 리스트
+  List<double?> aiScores = []; // 추가된 장소의 AIScore를 저장하는 리스트
   List<kakao.Poi> pois = []; // poi를 저장하는 리스트
   List<kakao.LatLng> poiLat = []; // poi의 좌표 리스트
   Map<String, String> uturnPoiConnected = {}; // 유턴 poi id, 이와 연결된 poi id
@@ -120,7 +120,7 @@ class MarkerService {
   }
 
   // 경로 추가 - aiScore 추가함
-  Future<void> addRoute(kakao.LatLng recentPosition, String? poiName, int? aiScore) async {
+  Future<void> addRoute(kakao.LatLng recentPosition, String? poiName, double? aiScore) async {
     if (poiLat.contains(recentPosition)) {
       print("이미 추가된 위치입니다");
       return;
@@ -234,7 +234,7 @@ class MarkerService {
     kakao.Poi prePoi = pois.removeAt(oldIndex);
     kakao.LatLng preLat = poiLat.removeAt(oldIndex);
     String place = places.removeAt(oldIndex);
-    int? aiScore = aiScores.removeAt(oldIndex);
+    double? aiScore = aiScores.removeAt(oldIndex);
     aiScores.insert(newIndex, aiScore);
     places.insert(newIndex, place);
     pois.insert(newIndex, prePoi);

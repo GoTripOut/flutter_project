@@ -35,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int selectedIndex = 0;
   kakao.LatLng? tappedPosition; // 지도 클릭 시 좌표 저장
   String? tappedPlaceName; // poi 이름
-  int? tappedPlaceAIScore; // ai 점수
+  double? tappedPlaceAIScore; // ai 점수
 
   Map<String, String> categoryMap = {
     "음식점": "FD6",
@@ -346,7 +346,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     if (result != null) {
-      final placeName = result['name'];
+      final String placeName = result['name'];
       final placePosition = kakao.LatLng(
         result['latitude'],
         result['longitude'],
@@ -356,6 +356,7 @@ class _MyHomePageState extends State<MyHomePage> {
       mapController!.moveCamera(
         kakao.CameraUpdate.newCenterPosition(placePosition),
       );
+
       setState(() {
         if (currentMarkerService!.visitedPosition.isEmpty ||
             !currentMarkerService!.isSameLatLng(currentMarkerService!.visitedPosition.last, placePosition)) {

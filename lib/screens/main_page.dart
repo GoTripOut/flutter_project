@@ -26,6 +26,12 @@ class _MainPageState extends State<MainPage>{
   void initState(){
     super.initState();
     userID = valueController.userID.value;
+    _initPlaceList();
+  }
+
+  Future<void> _initPlaceList() async {
+    await valueController.updatePlaceList();
+    placeList = valueController.placeList;
   }
 
   Future<bool> handleDoubleBackPressed() async {
@@ -92,48 +98,35 @@ class _MainPageState extends State<MainPage>{
                 backgroundColor: Colors.white,
                 surfaceTintColor: Colors.transparent,
               ),
-              body: FutureBuilder<String>(
-                future: sendRequest('get_user_place', userID: userID),    // 1: index, 2: place_name, 3: created_time, 4: start_date, 5: end_date
-                builder: (context, snapshot) {
-                  if(snapshot.connectionState == ConnectionState.waiting){
-                    return Center(child: CircularProgressIndicator());
-                  }else if(snapshot.hasData){
-                    placeList = jsonDecode(snapshot.data!);
-                    return Container(
-                      width: screenWidth,
-                      height: screenHeight,
-                      margin: EdgeInsets.only(top: 10),
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
+              body: Obx(() => valueController.placeList.value != placeList ? Container(
+                width: screenWidth,
+                height: screenHeight,
+                margin: EdgeInsets.only(top: 10),
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      child: Center(
+                        child:SizedBox(
+                          width: screenWidth * 0.88,
+                          height: screenHeight,
+                          child: isSearching        //검색 중일 경우 검색한 내용만, 아닐 경우 모든 내용을 내림차순 출력
+                            ? RouteListBuilder(routeContents: filteredList..sort((a, b) => DateTime.parse(a[4]).compareTo(DateTime.parse(b[4]))), addNewRoute: false, )
+                            : RouteListBuilder(routeContents: placeList..sort((a, b) => DateTime.parse(a[4]).compareTo(DateTime.parse(b[4]))), addNewRoute: false,)
+                        ),
                       ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            child: Center(
-                              child:SizedBox(
-                                  width: screenWidth * 0.88,
-                                  height: screenHeight,
-                                  child: isSearching        //검색 중일 경우 검색한 내용만, 아닐 경우 모든 내용을 내림차순 출력
-                                      ? RouteListBuilder(routeContents: filteredList..sort((a, b) => DateTime.parse(a[4]).compareTo(DateTime.parse(b[4]))), addNewRoute: false, )
-                                      : RouteListBuilder(routeContents: placeList..sort((a, b) => DateTime.parse(a[4]).compareTo(DateTime.parse(b[4]))), addNewRoute: false,)
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }else if(snapshot.hasError){
-                    return Text("error occurred ${snapshot.error}");
-                  }else{
-                    return Text("No data");
-                  }
-                },
+                    ),
+                  ],
+                ),
+              ) : Center(child: CircularProgressIndicator()),
               ),
               floatingActionButton: FloatingActionButton(
                   child: Icon(Icons.add),
                   onPressed: (){
-                    Get.to(IntroPageView())?.then((value){setState(() {});});
+                    Get.to(IntroPageView())?.then((value){valueController.isGetPlaceList.value = false;});
                   }
               ),
             )
