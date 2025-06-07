@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -50,6 +51,10 @@ class MyApp extends StatelessWidget {
   // This widgets is the root of your application.
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarIconBrightness: Brightness.dark, // 아이콘 색상 (Android)
+      statusBarBrightness: Brightness.dark, // 아이콘 색상 (iOS)
+    ));
     return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(

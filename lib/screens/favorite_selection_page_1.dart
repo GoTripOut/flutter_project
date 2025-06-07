@@ -1,126 +1,230 @@
 import 'package:flutter/material.dart';
-import 'package:sample_flutter_project/widgets/toggle_button.dart';
+import 'package:get/get.dart';
+import 'package:sample_flutter_project/global_value_controller.dart';
 
 class FavoriteSelectionPage1 extends StatefulWidget {
-  const FavoriteSelectionPage1({super.key});
+
+  const FavoriteSelectionPage1({super.key,});
 
   @override
-  State<StatefulWidget> createState() => _FavoriteSelectionPage1State();
+  State<FavoriteSelectionPage1> createState() => _FavoriteSelectionPage1State();
 }
 
 class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
-  List<String> selectedButtons = [];
-  final List<bool> _isSelected = [false, false, false, false];
+  List<String> selected = [];
+  var valueController = Get.find<GlobalValueController>();
+
+  final Map<String, IconData> categoryIcons = {
+    "음식": Icons.restaurant,
+    "풍경": Icons.camera_alt,
+    "여행 스타일": Icons.flight,
+  };
+
+  final Map<String, IconData> foodCategoryIcons = {
+    "한식": Icons.rice_bowl,
+    "일식": Icons.ramen_dining,
+    "중식": Icons.takeout_dining,
+    "양식": Icons.local_pizza,
+  };
+
+  final Map<String, IconData> viewCategoryIcons = {
+    "산": Icons.terrain,
+    "바다": Icons.waves,
+    "들": Icons.eco,
+    "도심": Icons.location_city,
+  };
+
+  final Map<String, IconData> travelStyleCategoryIcons = {
+    "계획적": Icons.event_note,
+    "즉흥적": Icons.bolt,
+  };
+
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-      body: Container(
-        width: screenWidth, // 동적 너비
-        height: screenHeight, // 동적 높이
-        padding: const EdgeInsets.only(
-          top: 15,
-          left: 15,
-          right: 15,
-          bottom: 10,
+    return SafeArea(
+      top: false,
+      left: false,
+      right: false,
+      bottom: true,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          shadowColor: Colors.grey.withAlpha(128),
+          elevation: 2.0,
+          title: Text("선호 카테고리 선택"),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
         ),
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(color: Colors.white),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          spacing: 140,
-          children: [
-            SizedBox(  //Title
-              width: double.infinity,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(   //main title
-                    width: screenWidth * 0.9, // 화면 너비의 비율로 설정
-                    child: Text(
-                      '풍경',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 48,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                        height: 1,
-                      ),
+        body: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // ✅ 수정된 부분: Wrap을 Container로 감싸고 width 강제
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  spacing: 10,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.restaurant),
+                        Text("선호 음식")
+                      ],
                     ),
-                  ),
-                  SizedBox(   //sub title
-                    width: screenWidth * 0.9, // 화면 너비의 비율로 설정
-                    child: Text(
-                      '선호하는 항목을 선택해주세요.',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 24,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                        height: 1,
-                      ),
+                    Obx(() => Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: foodCategoryIcons.keys.map((name) {
+                        return ActionChip(
+                          avatar: Icon(
+                            foodCategoryIcons[name],
+                            size: 20,
+                            color: valueController.foodSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                          ),
+                          label: Text(
+                            name,
+                            style: TextStyle(
+                              color: valueController.foodSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                            ),
+                          ),
+                          side: BorderSide(
+                            color: valueController.foodSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                          ),
+                          backgroundColor: Colors.white,
+                          onPressed: (){
+                            valueController.foodSelectedMap[name] = !valueController.foodSelectedMap[name]!;
+                          },
+                        );
+                      }).toList(),
                     ),
-                  ),
-                ],
+                    )
+                  ],
+                )
               ),
-            ),
-            SizedBox(      //토글 버튼 컨테이너
-              width: double.infinity,
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                runAlignment: WrapAlignment.start,
-                runSpacing: 30,
-                children: [
-                  ToggleButton(
-                    text: "산",
-                    onPressed: (){
-                      _isSelected[0] = !_isSelected[0];
-                      if(_isSelected[0]) {
-                        selectedButtons.add("산");
-                      }
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  spacing: 10,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(categoryIcons["풍경"]),
+                        Text("선호 풍경"),
+                      ],
+                    ),
+                    Obx(() => Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: viewCategoryIcons.keys.map((name) {
+                        return ActionChip(
+                          avatar: Icon(
+                            viewCategoryIcons[name],
+                            size: 20,
+                            color: valueController.viewSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                          ),
+                          label: Text(
+                            name,
+                            style: TextStyle(
+                              color: valueController.viewSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                            ),
+                          ),
+                          side: BorderSide(
+                            color: valueController.viewSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                          ),
+                          backgroundColor: Colors.white,
+                          onPressed: (){
+                            valueController.viewSelectedMap[name] = !valueController.viewSelectedMap[name]!;
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    )
+                  ],
+                )
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  spacing: 10,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(categoryIcons["여행 스타일"]),
+                        Text("여행 스타일")
+                      ],
+                    ),
+                    Obx(() => Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: travelStyleCategoryIcons.keys.map((name) {
+                        return ActionChip(
+                          avatar: Icon(
+                            travelStyleCategoryIcons[name],
+                            size: 20,
+                            color: valueController.travelStyleSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                          ),
+                          label: Text(
+                            name,
+                            style: TextStyle(
+                              color: valueController.travelStyleSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                            ),
+                          ),
+                          side: BorderSide(
+                            color: valueController.travelStyleSelectedMap[name]! ? Colors.deepPurpleAccent : Colors.grey,
+                          ),
+                          backgroundColor: Colors.white,
+                          onPressed: (){
+                            valueController.travelStyleSelectedMap[name] = !valueController.travelStyleSelectedMap[name]!;
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    )
+                  ],
+                )
+              ),
+              const SizedBox(height: 20),
+              if (selected.isNotEmpty) ...[
+                const Text("우선순위 정렬 (최대 5개까지)"),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 300,
+                  child: ReorderableListView(
+                    shrinkWrap: true,
+                    children: selected.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final name = entry.value;
+                      return ListTile(
+                        key: ValueKey('$name-$index'),
+                        leading: Icon(categoryIcons[name]),
+                        title: Text(name),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            setState(() {
+                              selected.removeAt(index);
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
+                    onReorder: (oldIndex, newIndex) {
+                      setState(() {
+                        if (newIndex > oldIndex) newIndex--;
+                        final item = selected.removeAt(oldIndex);
+                        selected.insert(newIndex, item);
+                      });
                     },
                   ),
-                  ToggleButton(
-                    text: "바다",
-                    onPressed: (){
-                      if(!selectedButtons.contains("바다")) {
-                        selectedButtons.add("바다");
-                      }
-                    },
-                  ),
-                  ToggleButton(
-                    text: "평야",
-                    onPressed: (){
-                      if(!selectedButtons.contains("산")) {
-                        selectedButtons.add("산");
-                      }
-                    },
-                  ),
-                  ToggleButton(text: "도심",
-                    onPressed: (){
-                      if(!selectedButtons.contains("산")) {
-                        selectedButtons.add("산");
-                      }
-                    },),
-                ],
-              ),
-            ),
-            Container(      //하단 띄우기용 컨테이너
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 11),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
+                const SizedBox(height: 80),
+              ],
+            ],
+          ),
+        )
     );
   }
 }

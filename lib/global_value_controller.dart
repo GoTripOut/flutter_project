@@ -16,6 +16,22 @@ class GlobalValueController extends GetxController{
   var isFirstSelect = false.obs;
   var isSecondSelect = false.obs;
   var selectedPlaceListID = 0.obs;
+  var foodSelectedMap = {
+    "한식": false,
+    "일식": false,
+    "중식": false,
+    "양식": false,
+  }.obs;
+  var viewSelectedMap = {
+    "산": false,
+    "바다": false,
+    "들": false,
+    "도심": false,
+  }.obs;
+  var travelStyleSelectedMap = {
+    "계획적": false,
+    "즉흥적": false,
+  }.obs;
   var firstSelectedDate = Day(
     day: DateTime(0),
     isInMonth: false,
