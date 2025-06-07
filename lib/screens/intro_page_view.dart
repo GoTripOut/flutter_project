@@ -6,10 +6,8 @@ import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
 import 'package:sample_flutter_project/screens/add_new_place_page.dart';
-import 'package:sample_flutter_project/screens/favorite_selection_page_1.dart';
-import 'package:sample_flutter_project/screens/favorite_selection_page_3.dart';
+import 'package:sample_flutter_project/screens/favorite_selection_page.dart';
 import 'package:intl/intl.dart';
-import 'favorite_selection_page_2.dart';
 
 class IntroPageView extends StatefulWidget{
   const IntroPageView({super.key});
@@ -27,7 +25,7 @@ class _IntroPageViewState extends State<IntroPageView>{
     super.initState();
     _pageController = PageController();
     valueController.updateIntroPageIndex(0);
-    pages = [AddNewPlacePage(controller: _pageController,), FavoriteSelectionPage1(), MyHomePage(title: 'flutterdemo')];
+    pages = [AddNewPlacePage(controller: _pageController,), FavoriteSelectionPage(), MyHomePage(title: 'flutterdemo')];
   }
   //페이지들을 관리할 리스트
 

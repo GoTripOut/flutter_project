@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 
-class FavoriteSelectionPage1 extends StatefulWidget {
+class FavoriteSelectionPage extends StatefulWidget {
 
-  const FavoriteSelectionPage1({super.key,});
+  const FavoriteSelectionPage({super.key,});
 
   @override
-  State<FavoriteSelectionPage1> createState() => _FavoriteSelectionPage1State();
+  State<FavoriteSelectionPage> createState() => _FavoriteSelectionPage1State();
 }
 
-class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage1> {
+class _FavoriteSelectionPage1State extends State<FavoriteSelectionPage> {
   List<String> selected = [];
   var valueController = Get.find<GlobalValueController>();
 
