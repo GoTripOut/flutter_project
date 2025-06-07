@@ -39,13 +39,13 @@ class _SignupPage extends State<SignupPage> {
         body: SingleChildScrollView(
           child: Container(
             width: screenWidth,
-            height: screenHeight,
+            height: screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 80,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(color: Colors.white),
             child: Stack(
               children: [
                 Positioned(
-                  top: screenHeight * 0.25,
+                  top: screenHeight * 0.2,
                   width: screenWidth,
                   child: Text(
                     '회원가입',
@@ -59,7 +59,7 @@ class _SignupPage extends State<SignupPage> {
                   ),
                 ),
                 Positioned( //로그인 ID, PW, 로그인, 회원가입 버튼 컨테이너
-                  top: screenHeight * 0.4,
+                  top: screenHeight * 0.2 + 80,
                   left: screenWidth * 0.1,
                   width: screenWidth * 0.8,
                   child: Column(
@@ -218,9 +218,9 @@ class _SignupPage extends State<SignupPage> {
                         },
                         text: '회원가입',
                         textColor: Colors.white,
-                        backgroundColor: const Color(0xFF0000FF),
+                        backgroundColor: Colors.deepPurple,
                         icon: Icon(Icons.person_add_outlined, size: 18, color: Colors.white),
-                        borderColor: const Color(0xFF0000FF)
+                        borderColor: Colors.deepPurple
                       ),
                       Divider(
                         thickness: 2,

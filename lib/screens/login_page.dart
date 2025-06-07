@@ -37,7 +37,7 @@ class _LoginState extends State<LoginPage> {
         body: SingleChildScrollView(
           child: Container(
             width: screenWidth,
-            height: screenHeight,
+            height: screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 50,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(color: Colors.white),
             child: Stack(
@@ -137,10 +137,10 @@ class _LoginState extends State<LoginPage> {
                           }
                         },
                         text: "로그인", 
-                        textColor: const Color(0xFF0000FF),
+                        textColor: Colors.deepPurple,
                         backgroundColor: Colors.white,
-                        borderColor: const Color(0xFF0000FF),
-                        icon: Icon(Icons.login_outlined, size: 18, color: Color(0xFF0000FF)),
+                        borderColor: Colors.deepPurple,
+                        icon: Icon(Icons.login_outlined, size: 18, color: Colors.deepPurple),
                       ),
                       IconTextButton(
                         onTap:(){
@@ -152,9 +152,9 @@ class _LoginState extends State<LoginPage> {
                         },
                         text: '회원가입',
                         textColor: Colors.white,
-                        backgroundColor: const Color(0xFF0000FF),
+                        backgroundColor: Colors.deepPurple,
                         icon: Icon(Icons.person_add_outlined, size: 18, color: Colors.white),
-                        borderColor: const Color(0xFF0000FF),
+                        borderColor: Colors.deepPurple,
                       ),
                     ],
                   ),

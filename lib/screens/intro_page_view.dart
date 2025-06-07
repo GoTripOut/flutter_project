@@ -6,10 +6,8 @@ import 'package:sample_flutter_project/fetch_fastapi_data.dart';
 import 'package:sample_flutter_project/global_value_controller.dart';
 import 'package:sample_flutter_project/screens/MyHomePage.dart';
 import 'package:sample_flutter_project/screens/add_new_place_page.dart';
-import 'package:sample_flutter_project/screens/favorite_selection_page_1.dart';
-import 'package:sample_flutter_project/screens/favorite_selection_page_3.dart';
+import 'package:sample_flutter_project/screens/favorite_selection_page.dart';
 import 'package:intl/intl.dart';
-import 'favorite_selection_page_2.dart';
 
 class IntroPageView extends StatefulWidget{
   const IntroPageView({super.key});
@@ -27,7 +25,7 @@ class _IntroPageViewState extends State<IntroPageView>{
     super.initState();
     _pageController = PageController();
     valueController.updateIntroPageIndex(0);
-    pages = [AddNewPlacePage(controller: _pageController,), FavoriteSelectionPage1(), FavoriteSelectionPage2(), FavoriteSelectionPage3(), MyHomePage(title: 'flutterdemo')];
+    pages = [AddNewPlacePage(controller: _pageController,), FavoriteSelectionPage(), MyHomePage(title: 'flutterdemo')];
   }
   //페이지들을 관리할 리스트
 
@@ -82,7 +80,7 @@ class _IntroPageViewState extends State<IntroPageView>{
             onPressed: () async {
               int pageIndex = valueController.introPageIndex.value;
               valueController.updateIntroPageIndex(++pageIndex);
-              if(pageIndex == 4){
+              if(pageIndex == pages.length - 1){
                 DateTime startDate = valueController.firstSelectedDate.value.day;
                 DateTime endDate = valueController.secondSelectedDate.value.day;
                 String result = await sendRequest('insert_new_place', newPlace: [valueController.selectedPlace.value, DateFormat('yyyy-MM-dd').format(startDate), DateFormat('yyyy-MM-dd').format(endDate)], userID: valueController.userID.value);
@@ -96,20 +94,13 @@ class _IntroPageViewState extends State<IntroPageView>{
               );
             },
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF0000FF),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 11),
+              backgroundColor: Colors.white,
+              side: BorderSide(
+                color: Colors.deepPurple
+              )
             ),
             child: const Text(
               "다음",
-              style: TextStyle(
-                leadingDistribution: TextLeadingDistribution.even,
-                color: Colors.white,
-                fontSize: 16,
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w600,
-                height: 1,
-              ),
             ),
           ),
         ],
@@ -135,7 +126,7 @@ class _IntroPageViewState extends State<IntroPageView>{
             //마지막 페이지:버튼 없음. 이전 페이지들 리스트에서 삭제
             //이외:이전, 다음 버튼
             Obx(() => valueController.introPageIndex.value == 1
-                ? nextButton() : valueController.introPageIndex.value < 4 && valueController.introPageIndex.value > 1
+                ? nextButton() : valueController.introPageIndex.value < pages.length - 1 && valueController.introPageIndex.value > 1
                 ? Stack(children: [prevButton(), nextButton()]) : SizedBox.shrink())
           ],
         )
