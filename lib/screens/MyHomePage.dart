@@ -143,13 +143,14 @@ class _MyHomePageState extends State<MyHomePage> {
       kakao.LatLng markerPos = kakao.LatLng(double.parse(markerData[4]), double.parse(markerData[3]));    //x, y값
       myPosition = markerPos;
       for(MarkerService service in tripDatesMarkerServices.values){
-        if(service.selectedDay != 1){
-          await service.hideFromMap();
-        }
+        print(service.selectedDay);
         if(service.selectedDay == markerData[8]){
           service.recentPosition = markerPos;
           await service.addRoute(markerPos, markerData[2], markerData[5]);
           service.visitedPosition.add(markerPos);
+        }
+        if(service.selectedDay != 1){
+          await service.hideFromMap();
         }
       }
     }
@@ -635,8 +636,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     context: context,
                     isScrollControlled: true,
                     builder: (context) {
-                      return CategorySelectorSheet(
-                        categoryMap: categoryMap, // Map<String, String
+                      return SafeArea(
+                        child: CategorySelectorSheet(
+                          categoryMap: categoryMap, // Map<String, String
+                        ),
                       );
                     }
                   );
