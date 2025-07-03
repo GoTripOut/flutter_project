@@ -6,6 +6,7 @@ import 'package:sample_flutter_project/screens/signup_page.dart';
 import '../global_value_controller.dart';
 import '../password_hashing.dart';
 import '../widgets/icon_text_button.dart';
+import 'home_page.dart';
 import 'main_page.dart';
 
 
@@ -132,7 +133,7 @@ class _LoginState extends State<LoginPage> {
                           if(userAuthentication) {
                             Get.find<GlobalValueController>().updateUserID(id!);
                             Get.off(
-                              MainPage()
+                              HomePage()
                             );
                           }
                         },
