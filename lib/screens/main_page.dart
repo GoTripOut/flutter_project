@@ -28,7 +28,7 @@ class _MainPageState extends State<MainPage>{
 
   Future<void> _initPlaceList() async {
     await valueController.updatePlaceList();
-    placeList = valueController.placeList;
+    placeList = valueController.userPlaceList;
   }
 
   Future<bool> handleDoubleBackPressed() async {
@@ -95,7 +95,7 @@ class _MainPageState extends State<MainPage>{
                 backgroundColor: Colors.white,
                 surfaceTintColor: Colors.transparent,
               ),
-              body: Obx(() => valueController.placeList.value != placeList ? Container(
+              body: Obx(() => valueController.userPlaceList.value != placeList ? Container(
                 width: screenWidth,
                 height: screenHeight,
                 margin: EdgeInsets.only(top: 10),

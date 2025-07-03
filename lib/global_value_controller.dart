@@ -10,6 +10,7 @@ class GlobalValueController extends GetxController{
   var isLoading = false.obs; // 요청 진행중
   var isGetPlaceList = false.obs;
   var userID = "".obs;
+  var userPlaceList = [].obs;
   var placeList = ([["강릉"], ["인천"], ["제주"], ["속초"], ["원주"], ["부산"], ["서울"]]..sort((a, b) => a[0].compareTo(b[0]))).obs;
   var introPageIndex = 0.obs;
   var selectedPlace = "".obs;
@@ -60,7 +61,7 @@ class GlobalValueController extends GetxController{
     String response = await sendRequest('get_user_place', userID: userID.value);
     print("upate_place_list");
     if(response != "failed"){
-      placeList.value = jsonDecode(await sendRequest('get_user_place', userID: userID.value));
+      userPlaceList.value = jsonDecode(await sendRequest('get_user_place', userID: userID.value));
       update();
       isGetPlaceList.value = true;
       return true;
