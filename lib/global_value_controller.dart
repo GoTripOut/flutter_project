@@ -10,7 +10,7 @@ class GlobalValueController extends GetxController{
   var isLoading = false.obs; // 요청 진행중
   var isGetPlaceList = false.obs;
   var userID = "".obs;
-  var placeList = [].obs;
+  var placeList = ([["강릉"], ["인천"], ["제주"], ["속초"], ["원주"], ["부산"], ["서울"]]..sort((a, b) => a[0].compareTo(b[0]))).obs;
   var introPageIndex = 0.obs;
   var selectedPlace = "".obs;
   var isFirstSelect = false.obs;

@@ -324,8 +324,7 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
                               _showDeleteAccept = !_showDeleteAccept;
                             });
                           },
-                          icon: Icon(Icons.delete, size: 20, color: Colors.grey,),
-                      ),
+                          icon: Icon(Icons.delete, size: 20, color: Colors.grey,)),
 
                       AnimatedContainer(
                         duration: Duration(milliseconds: 300),
@@ -339,7 +338,8 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
                               },
                               icon: Icon(
                                 Icons.close,
-                                color: _showDeleteAccept ? Colors.red : Colors.transparent,),
+                                color: _showDeleteAccept ? Colors.red : Colors.transparent,
+                              ),
                             ),
                             IconButton(
                               onPressed: () async {
@@ -348,7 +348,8 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
                               },
                               icon: Icon(
                                 Icons.check,
-                                color: _showDeleteAccept ? Colors.green : Colors.transparent,),
+                                color: _showDeleteAccept ? Colors.green : Colors.transparent,
+                              ),
                             ),
                           ],
                         ),

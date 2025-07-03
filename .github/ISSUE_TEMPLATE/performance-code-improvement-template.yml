@@ -1,0 +1,25 @@
+name: "🚀 Improvement"
+description: "성능 개선 및 리팩토링"
+labels: ["improvement"]
+body:
+  - type: textarea
+    attributes:
+      label: 📄 개선 내용
+      description: 무엇을 개선하고 싶나요?
+      placeholder: 현재 문제점과 개선 방법을 간단히 설명해 주세요
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ✅ 작업할 내용
+      description: 할 일을 체크박스 형태로 작성해주세요
+      placeholder: 최대한 세분화 해서 적어주세요!
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 📈 기대 효과
+      description: 이 개선으로 얻을 수 있는 이점
+      placeholder: 성능 향상, 코드 가독성 등

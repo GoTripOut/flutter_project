@@ -75,32 +75,34 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: Obx(() => SafeArea(
+      home: SafeArea(
         top: false,
         left: false,
         right: false,
         bottom: true,
-        child: Get.find<GlobalValueController>().serverUrl.value != "" ? LoginPage() : Container(
-          color: Colors.white,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 5,
-            children: [
-              CircularProgressIndicator(),
-              Text(
-                "서버 연결 중...",
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                  decoration: TextDecoration.none,
-                )
+        child: Obx(() => Get.find<GlobalValueController>().serverUrl.value != "" 
+            ? const LoginPage() 
+            : Container(
+                color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 10),
+                    Text(
+                      "서버 연결 중...",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          )
-        )
-      )
-      )
+        ),
+      ),
     );
   }
 }

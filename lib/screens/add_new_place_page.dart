@@ -15,9 +15,7 @@ class AddNewPlacePage extends StatefulWidget {
 class _AddNewPlacePageState extends State<AddNewPlacePage>{
   var valueController = Get.find<GlobalValueController>();
   bool isSearching = false;
-  List<List<String>> placeList = [["강릉"], ["인천"], ["제주"], ["속초"], ["원주"], ["부산"], ["서울"]];
-  List<List<String>> filteredList = [];
-  DateTime? lastPressedTime;
+  List<dynamic> filteredList = [];
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +28,7 @@ class _AddNewPlacePageState extends State<AddNewPlacePage>{
         elevation: 2.0,
         title: isSearching ? TextField(
           onChanged: (value){
-            filteredList = placeList
+            filteredList = valueController.placeList
                 .where((item) => item[0].toLowerCase().contains(value.toLowerCase()))
                 .toList();
             setState((){});
@@ -66,9 +64,9 @@ class _AddNewPlacePageState extends State<AddNewPlacePage>{
                   margin: EdgeInsets.only(top: 10),
                   width: screenWidth * 0.88,
                   height: screenHeight,
-                  child: isSearching
+                  child: Obx(() => isSearching
                       ? RouteListBuilder(controller: widget.controller, routeContents: filteredList..sort((a, b) => (a[0]).compareTo(b[0])), addNewRoute: true,)
-                      : RouteListBuilder(controller: widget.controller, routeContents: placeList..sort((a, b) => a[0].compareTo(b[0])), addNewRoute: true,),
+                      : RouteListBuilder(controller: widget.controller, routeContents: valueController.placeList, addNewRoute: true,)),
                 ),
               ),
             ),
