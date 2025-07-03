@@ -1,0 +1,27 @@
+name: "🐛 Bug"
+description: "버그 신고"
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: 📄 버그 설명
+      description: 어떤 문제가 발생했나요?
+      placeholder: 간단히 설명해 주세요
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🔄 재현 방법
+      description: 어떻게 재현할 수 있나요?
+      placeholder: |
+        1. 단계별로
+        2. 작성해 주세요
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 📋 환경 정보
+      description: 어떤 환경에서 발생했나요?
+      placeholder: Python 버전, 환경(dev/prod) 등
