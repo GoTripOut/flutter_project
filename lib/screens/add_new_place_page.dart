@@ -66,7 +66,7 @@ class _AddNewPlacePageState extends State<AddNewPlacePage>{
                   height: screenHeight,
                   child: Obx(() => isSearching
                       ? RouteListBuilder(controller: widget.controller, routeContents: filteredList..sort((a, b) => (a[0]).compareTo(b[0])), addNewRoute: true,)
-                      : RouteListBuilder(controller: widget.controller, routeContents: valueController.placeList, addNewRoute: true,)),
+                      : RouteListBuilder(controller: widget.controller, routeContents: valueController.placeList..sort((a, b) => (a[0]).compareTo(b[0])), addNewRoute: true,)),
                 ),
               ),
             ),
