@@ -664,8 +664,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         );
 
                         if (response.isNotEmpty) {
-                          // 선택한 장소 리스트 화면 이동 등 처리
-                          _moveCategoryPlacePage(categoryName, response);
+                          // 선택한 장소 리스트 화면 이동 등 처리 (완료될 때까지 대기)
+                          await _moveCategoryPlacePage(categoryName, response);
 
                           final cacheKey = "$categoryCode-${currentMarkerService!.recentPosition}";
                           cachedPlaceList[cacheKey] = jsonDecode(response);
