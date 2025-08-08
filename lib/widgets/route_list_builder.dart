@@ -23,8 +23,7 @@ class _RouteListBuilderState extends State<RouteListBuilder>{
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
-      child: Wrap(
-        direction: Axis.vertical,
+      child: Column(
         children: widget.routeContents.map((content){
           return widget.addNewRoute
               ? RouteContainer(place: content[0], controller: widget.controller,)

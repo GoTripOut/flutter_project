@@ -6,6 +6,7 @@ import 'package:sample_flutter_project/screens/main_page.dart';
 import 'package:sample_flutter_project/screens/add_new_place_page.dart';
 import '../global_value_controller.dart';
 import '../widgets/sliding_banner.dart';
+import 'intro_page_view.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,6 +20,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final _valueController = Get.find<GlobalValueController>();
   final PageController _pageController = PageController(initialPage: 1);
   late AnimationController _animationController;
+
+  // Dummy data for the new banner
+  final List<String> festivalBannerItems = [
+    "서울 빛초롱 축제",
+    "부산 국제 영화제",
+    "진해 군항제",
+    "보령 머드 축제",
+  ];
 
   @override
   void initState() {
@@ -55,13 +64,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           Padding(
             padding: EdgeInsets.only(top: headerHeight),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10.0), // Margin below the header
+                const Padding(
+                  padding: EdgeInsets.only(left: 16.0, bottom: 8.0),
+                  child: Text(
+                    "추천 여행지",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
                 Obx(() => SlidingBanner(
                       bannerItems: _valueController.placeList
                           .map((item) => item[0])
                           .toList(),
                     )),
+                const SizedBox(height: 20.0),
+                const Padding(
+                  padding: EdgeInsets.only(left: 16.0, bottom: 8.0),
+                  child: Text(
+                    "진행중인 축제 및 행사",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                SlidingBanner(
+                  bannerItems: festivalBannerItems,
+                ),
               ],
             ),
           ),
@@ -110,7 +138,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final List<Widget> pages = [
       MainPage(),
       _buildHomeScreen(context),
-      AddNewPlacePage(),
+      IntroPageView(),
     ];
 
     return Scaffold(
