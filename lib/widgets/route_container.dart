@@ -46,11 +46,13 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
     DateTime startDate = DateTime.parse(widget.startDate);
     DateTime endDate = DateTime.parse(widget.endDate);
     int days = endDate.difference(startDate).inDays;
-    _routeList = List.generate(days + 1,(_) => []);;
+    _routeList = List.generate(days + 1,(_) => []);
     final decodeResponse = jsonDecode(response);
     for(var markerData in decodeResponse){
       _routeList[markerData[8] - 1].add([markerData[7], markerData[2]]);
-      print("Route_list: ${_routeList}");
+    }
+    if(mounted){
+      setState(() {});
     }
   }
   @override
@@ -59,6 +61,7 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
     final screenHeight = MediaQuery.of(context).size.height;
     void showCalendarBottomSheet(){
       showModalBottomSheet(
+        backgroundColor: Colors.white,
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
@@ -117,255 +120,224 @@ class _RouteContainerState extends State<RouteContainer> with SingleTickerProvid
         },
       );
     }
-    return SizedBox(
-      width: screenWidth * 0.88,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextButton(
-            onPressed: () {
-              valueController.isGetPlaceList.value = false;
-              valueController.updateSelectedPlace(widget.place);
-              if(widget.startDate != ""){
-                valueController.updateDate(DateTime.parse(widget.startDate), DateTime.parse(widget.endDate));
-                valueController.updateSelectedPlaceListID(widget.placeListID);
-                Get.to(MyHomePage(title: 'demo'));
-              } else {
-                showCalendarBottomSheet();
-              }
-            },
-            style: TextButton.styleFrom(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-              fixedSize: Size(screenWidth * 0.88, 77),
-              backgroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 11),
-            ),
-            child: Row(
-              spacing: 10,
-              mainAxisAlignment: widget.startDate != "" ? MainAxisAlignment.spaceBetween : MainAxisAlignment.start,
-              children: widget.startDate != "" ? [
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 1.0
-                        )
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(50),
-                        child: Image.asset(
-                          '',
-                          width: 50,
-                          height: 50,
-                          errorBuilder: (context, error, stackTrace){
-                            return Icon(Icons.image_not_supported, size: 50);
-                          },
-                        ),
-                      ),
-                    ),
-                    Column(
-                      spacing: 10,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+    return Card(
+      elevation: 2.0,
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: InkWell(
+        onTap: () {
+          if (widget.startDate.isEmpty) {
+            showCalendarBottomSheet();
+          } else {
+            valueController.isGetPlaceList.value = false;
+            valueController.updateSelectedPlace(widget.place);
+            valueController.updateDate(DateTime.parse(widget.startDate), DateTime.parse(widget.endDate));
+            valueController.updateSelectedPlaceListID(widget.placeListID);
+            Get.to(MyHomePage(title: 'demo'));
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
                       children: [
-                        Text(
-                          widget.place,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w600,
-                            height: 1,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.asset(
+                            '', // Placeholder for an image
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 50,
+                                height: 50,
+                                color: Colors.grey[200],
+                                child: Icon(Icons.place, color: Colors.grey[600]),
+                              );
+                            },
                           ),
                         ),
-                        Text(
-                          "${widget.startDate}~${widget.endDate}",
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 10,
-                            height: 1,
-                          )
-                        )
-                      ]
+                        const SizedBox(width: 12.0),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.place,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (widget.startDate.isNotEmpty)
+                                Text(
+                                  "${widget.startDate} ~ ${widget.endDate}",
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ]
-                ),
-                IconButton(
-                  onPressed: (){
-                    setState((){
-                      _showPlan = !_showPlan;
-                    });
-                  },
-                  icon: _showPlan ? Icon(Icons.keyboard_arrow_down, size: 30, color: Colors.grey) : Icon(Icons.keyboard_arrow_up, size: 30 , color: Colors.grey)
-                )
-              ] : [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    border: Border.all(
-                        color: Colors.white,
-                        width: 1.0
-                    )
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(50),
-                    child: Image.asset(
-                      '',
-                      width: 50,
-                      height: 50,
-                      errorBuilder: (context, error, stackTrace){
-                        return Icon(Icons.image_not_supported, size: 50);
+                  if (widget.startDate.isNotEmpty)
+                    IconButton(
+                      icon: Icon(_showPlan ? Icons.expand_less : Icons.expand_more),
+                      onPressed: () {
+                        setState(() {
+                          _showPlan = !_showPlan;
+                        });
                       },
                     ),
-                  ),
-                ),
-                Text(
-                  widget.place,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                    height: 1,
-                  ),
-                ),
-              ]
-            ),
-          ),
-          AnimatedContainer(
-            duration: Duration(milliseconds: 500),
-            height: _showPlan ? 100 : 0,
-            width: screenWidth,
-            curve: Curves.easeInOut,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for(int i = 0; i < _routeList.length; i++)
-                          for(int j = 0; j < _routeList[i].length; j++)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                j == 0 ? Container(
-                                    margin: EdgeInsets.only(bottom: 3),
-                                    width: 20,
-                                    height: 20,
-                                    padding: EdgeInsets.symmetric(horizontal: 5),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(90),
-                                      color: Colors.blue,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        "${i + 1}",
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontFamily: 'Inter',
-                                          height: 1,
-                                        ),
-                                      ),
-                                    )
-                                ) : SizedBox(
-                                  width: 20,
-                                ),
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                        width: 20,
-                                        child: Center(
-                                          child: DottedLine(
-                                            direction: Axis.vertical,
-                                            dashRadius: 90,
-                                            dashColor: Colors.grey,
-                                            lineLength: 24,
-                                            dashLength: 3,
-                                            dashGapLength: 3,
-                                            lineThickness: 3,
-                                          ),
-                                        )
-                                    ),
-                                    Text(
-                                      _routeList[i][j][1],
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 14,
-                                        fontFamily: 'Inter',
-                                        height: 1,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              ],
-                            )
-                      ],
-                    )
-                  ),
-                ),
-                SingleChildScrollView(
+                ],
+              ),
+              if (_showPlan)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _showDeleteAccept = !_showDeleteAccept;
-                            });
-                          },
-                          icon: Icon(Icons.delete, size: 20, color: Colors.grey,)),
-
-                      AnimatedContainer(
-                        duration: Duration(milliseconds: 300),
-                        height: _showDeleteAccept ? 40 : 0,
-                        curve: Curves.easeInOut,
-                        child: Row(
-                          children: [
-                            IconButton(
-                              onPressed: (){
-
-                              },
-                              icon: Icon(
-                                Icons.close,
-                                color: _showDeleteAccept ? Colors.red : Colors.transparent,
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () async {
-                                await sendRequest('delete_place_list', placeInfo: [widget.placeListID]);
-                                valueController.updatePlaceList();
-                              },
-                              icon: Icon(
-                                Icons.check,
-                                color: _showDeleteAccept ? Colors.green : Colors.transparent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
+                      const Divider(),
+                      _buildRouteDetails(),
+                      _buildDeleteButton(),
                     ],
                   ),
-                )
-              ],
-            )
+                ),
+            ],
           ),
-          Divider(
-            thickness: 1.0,
-            color: Colors.grey,
-          )
-        ]
-      )
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouteDetails() {
+    if (_routeList.every((day) => day.isEmpty)) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.0),
+        child: Center(child: Text("세부 일정이 없습니다.")),
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _routeList.asMap().entries.map((dayEntry) {
+        int dayIndex = dayEntry.key;
+        List<dynamic> places = dayEntry.value;
+
+        if (places.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  "Day ${dayIndex + 1}",
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...places.map((placeData) {
+                return Padding(
+                  padding: const EdgeInsets.only(left: 8.0, top: 4.0, bottom: 4.0),
+                  child: Row(
+                    children: [
+                      const SizedBox(
+                        width: 12,
+                        child: Center(
+                          child: DottedLine(
+                            direction: Axis.vertical,
+                            dashRadius: 2,
+                            dashColor: Colors.grey,
+                            lineLength: 24,
+                            dashLength: 3,
+                            dashGapLength: 3,
+                            lineThickness: 1.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          placeData[1],
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildDeleteButton() {
+    return Column(
+      children: [
+        IconButton(
+          onPressed: () {
+            setState(() {
+              _showDeleteAccept = !_showDeleteAccept;
+            });
+          },
+          icon: Icon(Icons.delete, color: Colors.grey[600]),
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _showDeleteAccept ? 40 : 0,
+          curve: Curves.easeInOut,
+          child: _showDeleteAccept
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _showDeleteAccept = false;
+                        });
+                      },
+                      child:
+                          const Text("취소", style: TextStyle(color: Colors.red)),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await sendRequest('delete_place_list',
+                            placeInfo: [widget.placeListID]);
+                        valueController.updatePlaceList();
+                      },
+                      child: const Text("확인",
+                          style: TextStyle(color: Colors.green)),
+                    ),
+                  ],
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 }
